@@ -25,7 +25,7 @@ def set_outside_variables(block_heldN,block_is_placedN):
 
 def player(pygame, player_blocks, walls, button_press_buffer_more, block_next,
            timer_conversion, button_press_buffer,
-           keyInput,block_size):
+           keyInput):
     global timer, block_held, block_is_placed, block_fast_down
     placeSkip = False
 
@@ -36,24 +36,28 @@ def player(pygame, player_blocks, walls, button_press_buffer_more, block_next,
 
         x_originals = []
         y_originals = []
+
         for l in range(len(player_blocks)):
             x_originals.append(player_blocks[l].x)
             y_originals.append(player_blocks[l].y)
 
         for l in range(len(player_blocks)):
             player_block = player_blocks[l]
+
+            width = player_block.get_width()
+            height = player_block.get_height()
             x = player_block.get_x()
             x_og = x
             y = player_block.get_y()
 
             if keyInput[pygame.K_d]:
                 key_pressed = True
-                x = x + block_size
+                x = x + width
             elif keyInput[pygame.K_a]:
                 key_pressed = True
-                x = x - block_size
+                x = x - width
             elif keyInput[pygame.K_s]:
-                y = y + block_size
+                y = y + height
                 key_pressed = True
                 block_fast_down = True
 

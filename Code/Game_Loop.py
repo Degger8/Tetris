@@ -8,6 +8,8 @@ import Game_Object as game_object
 import Colission_Helper as colission_helper
 import Keyboard_Helper as keyboard_helper
 
+resource.main_theme.play()
+
 # Blocks next/hold:
 # 1 -> I shape (long)
 # 2 -> block
@@ -68,7 +70,6 @@ width_center = (screen_width - width_walls_total)/2
 height_center = (screen_height - height_walls_total)/2
 
 walls = []
-walls_bottom = []
 
 def calculate_grid_cords(cord, is_x):
     global width_center, height_center, block_size
@@ -84,19 +85,25 @@ def calculate_world_cords(cord, is_x):
     else:
         return cord * block_size + height_center
 
-for i in range(rows):
-    for j in range(columns):
-        if j - 1 < 0 or j + 1 >= columns or i + 1 >= rows:
-            x = calculate_world_cords(j,True)
-            y = calculate_world_cords(i,False)
+# x_w = cord * block_size + width_center
+# (x_w - width_center) / block_size = cord
 
-            grey_scale = 100
-            wall_colour = [grey_scale,grey_scale,grey_scale]
+def create_walls():
+    global walls, block_size
+    walls.clear()
+    for i in range(rows):
+        for j in range(columns):
+            if j - 1 < 0 or j + 1 >= columns or i + 1 >= rows:
+                x = calculate_world_cords(j,True)
+                y = calculate_world_cords(i,False)
 
-            object = game_object.object(x,y,wall_colour,block_size)
-            walls.append(object)
+                grey_scale = 100
+                wall_colour = [grey_scale,grey_scale,grey_scale]
 
-            grid[i][j] = 1
+                object = game_object.object(x,y,wall_colour,block_size)
+                walls.append(object)
+
+                grid[i][j] = 1
 
 def print_grid():
     global columns, rows
@@ -106,6 +113,8 @@ def print_grid():
         print()
 
 def block_spawn(value):
+    global not_game_over, walls
+
     blocks = []
 
     y = height_center
@@ -172,53 +181,103 @@ def block_spawn(value):
             obj = game_object.object(x + block_size * i, y + block_size, colour, block_size)
             blocks.append(obj)
 
+    for i in range(len(walls)):
+        for j in range(len(blocks)):
+            if colission_helper.AABB(walls[i],blocks[j]):
+                not_game_over = False
+
     return blocks
+
+create_walls()
 
 running = True
 fps = 60
 
 player_block = None
+block_held_active = False
+next_object = None
+hold_object = None
+block_next = random.randint(blocks_min_max[0],blocks_min_max[1])
 
 pygame.init()
 pygame.display.set_caption("Tetris")
 screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 
-def move_blocks_down():
-    global grid, walls, columns, rows
+def move_blocks_down(rows_removed, y_lowest):
+    global grid, walls, columns, rows, block_size
+
+    y_move_down = rows_removed * block_size
+    print("rows removed",rows_removed)
 
     i = rows - 1
-
     while i >= 0:
         j = columns - 1
         while j >= 0:
             if j > 0 and j + 1 < columns and i + 1 < rows:
                 if grid[i][j] == 2:
-                    y = i + 1
-                    not_touched = True
-                    while not_touched:
-                        if grid[y][j] == 1 or grid[y][j] == 2:
-                            not_touched = False
-                        else:
-                            y = y + 1
-                            if y >= rows:
-                                break
-
-                    y = y - 1
                     x_world_cords_origin = calculate_world_cords(j,True)
                     y_world_cords_origin = calculate_world_cords(i,False)
-                    y_world_cords = calculate_world_cords(y,False)
+                    y_new = y_move_down + y_world_cords_origin
 
                     for k in range(len(walls)):
-                        if walls[k].get_y() == y_world_cords_origin and walls[k].get_x() == x_world_cords_origin:
-                            walls[k].set_y(y_world_cords)
+                        if walls[k].get_y() == y_world_cords_origin and walls[k].get_x() == x_world_cords_origin and walls[k].get_y() < y_lowest:
                             grid[i][j] = 0
-                            grid[y][j] = 2
-
+                            walls[k].set_y(y_new)
+                            
+                            y_new_pos = calculate_grid_cords(y_new,False)
+                            grid[y_new_pos][j] = 2
             j = j - 1
 
         i = i - 1
+    
+    print()    
     print_grid()
+
+def rows_done_count():
+    global grid, columns, rows
+
+    total_rows = 0
+    for i in range(rows):
+        row_done = True
+        for j in range(columns):
+            if j > 0 and j + 1 < columns: 
+                if grid[i][j] == 0 or grid[i][j] == 1:
+                    row_done = False
+        if row_done:
+            total_rows = total_rows + 1
+
+    return total_rows
+
+def lowest_done_row():
+    global grid, columns, rows
+
+    lowest_y = 0
+    for i in range(rows):
+        row_done = True
+        for j in range(columns):
+            if j > 0 and j + 1 < columns: 
+                if grid[i][j] == 0 or grid[i][j] == 1:
+                    row_done = False
+        if row_done:
+            if i > lowest_y:
+                lowest_y = i
+
+    return_y = calculate_world_cords(lowest_y,False)
+    return return_y
+
+
+def restart():
+    global player_block, block_held, block_next, block_held_active, next_object, hold_object, block_is_placed, not_game_over
+    create_walls()
+    player_block = None
+    block_held = 0
+    block_next = random.randint(blocks_min_max[0],blocks_min_max[1])
+    block_held_active = False
+    next_object = None
+    hold_object = None
+    block_is_placed = False
+    not_game_over = True
 
 def x_away(list, check_right):
     x_extra = 1
@@ -249,11 +308,6 @@ def x_away(list, check_right):
                 break
     return x_extra
 
-block_held_active = False
-next_object = None
-hold_object = None
-block_next = random.randint(blocks_min_max[0],blocks_min_max[1])
-
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -262,83 +316,93 @@ while running:
     keyInput = pygame.key.get_pressed()
 
     if player_block is not None:
-        keyboard_helper.set_outside_variables(block_held_active,block_is_placed)
-        placeSkip = keyboard_helper.player(pygame,player_block,
-                                           walls, button_press_buffer_more, block_next, timer_conversion,
-                                           button_press_buffer, keyInput, block_size)
+        if not not_game_over:
+            restart()
+        else:
+            keyboard_helper.set_outside_variables(block_held_active,block_is_placed)
+            placeSkip = keyboard_helper.player(pygame,player_block,
+                                            walls, button_press_buffer_more, block_next, timer_conversion,
+                                            button_press_buffer, keyInput)
 
-        block_held_active = keyboard_helper.get_block_held()
-        block_is_placed = keyboard_helper.get_block_is_placed()
-        block_fast_down = keyboard_helper.get_block_fast_down()
+            block_held_active = keyboard_helper.get_block_held()
+            block_is_placed = keyboard_helper.get_block_is_placed()
+            block_fast_down = keyboard_helper.get_block_fast_down()
 
-        if block_fast_down:
-            timer_go_down = time.time() * timer_conversion
+            if block_fast_down:
+                timer_go_down = time.time() * timer_conversion
 
-        if timer_go_down + buffer_go_down < time.time() * timer_conversion or placeSkip:
-            timer_go_down = time.time() * timer_conversion
-            place = False
+            if timer_go_down + buffer_go_down < time.time() * timer_conversion or placeSkip:
+                timer_go_down = time.time() * timer_conversion
+                place = False
 
-            for l in range(len(player_block)):
-                y = player_block[l].get_y()
-                y_og = y
-                y = y + block_size
-                player_block[l].set_y(y)
-
-                for i in range(len(walls)):
-                    if colission_helper.AABB(player_block[l], walls[i]):
-                        place = True
-
-            if place:
                 for l in range(len(player_block)):
-                    y = player_block[l].get_y() - block_size
+                    y = player_block[l].get_y()
+                    y_og = y
+                    y = y + block_size
                     player_block[l].set_y(y)
 
-                for l in range(len(player_block)):
-                    walls.append(player_block[l])
-                    block_is_placed = True
+                    for i in range(len(walls)):
+                        if colission_helper.AABB(player_block[l], walls[i]):
+                            place = True
 
-                    x_array = calculate_grid_cords(player_block[l].get_x(),True)
-                    y_array = calculate_grid_cords(player_block[l].get_y(),False)
+                if place:
+                    for l in range(len(player_block)):
+                        y = player_block[l].get_y() - block_size
+                        player_block[l].set_y(y)
 
-                    if x_array >= columns:
-                       x_array = columns - 1
-                    elif x_array < 0:
-                        x_array = 0
+                    for l in range(len(player_block)):
+                        walls.append(player_block[l])
+                        block_is_placed = True
 
-                    if y_array >= rows:
-                       y_array = rows - 1
-                    elif y_array < 0:
-                        y_array = 0
+                        x_array = calculate_grid_cords(player_block[l].get_x(),True)
+                        y_array = calculate_grid_cords(player_block[l].get_y(),False)
 
-                    grid[y_array][x_array] = 2
+                        if x_array >= columns:
+                            x_array = columns - 1
+                        elif x_array < 0:
+                            x_array = 0
 
-            for i in range(rows):
-                row_done = True
-                blocks = []
-                for j in range(columns):
-                    if j > 0 and j + 1 < columns:
-                        if grid[i][j] == 0 or grid[i][j] == 1:
-                            row_done = False
-                        else:
-                            x = j * block_size + width_center
-                            y = i * block_size + height_center
+                        if y_array >= rows:
+                            y_array = rows - 1
+                        elif y_array < 0:
+                            y_array = 0
 
-                            for k in range(len(walls)):
-                                if walls[k].get_x() == x and walls[k].get_y() == y:
-                                    blocks.append(walls[k])
+                        grid[y_array][x_array] = 2
 
-                if row_done:
-                    for j in range(len(blocks)):
-                        walls.remove(blocks[j])
+                rows_removed = rows_done_count()
+                y_lowest = lowest_done_row()
+                rows_move_down = False
+                for i in range(rows):
+                    row_done = True
+                    blocks = []
 
-                        x_array = calculate_grid_cords(blocks[j].get_x(),True)
-                        y_array = calculate_grid_cords(blocks[j].get_y(),False)
+                    for j in range(columns):
+                        if j > 0 and j + 1 < columns:
+                            if grid[i][j] == 0 or grid[i][j] == 1:
+                                row_done = False
+                            else:
+                                x = calculate_world_cords(j,True)
+                                y = calculate_world_cords(i,False)
 
-                        grid[y_array][x_array] = 0
+                                for k in range(len(walls)):
+                                    if walls[k].get_x() == x and walls[k].get_y() == y:
+                                        blocks.append(walls[k]) 
 
-                    move_blocks_down()
+                    if row_done:
+                        print("blocks for removal:",len(blocks))
+                        for j in range(len(blocks)):
+                            x_array = calculate_grid_cords(blocks[j].get_x(),True)
+                            y_array = calculate_grid_cords(blocks[j].get_y(),False)
 
-                blocks.clear()
+                            grid[y_array][x_array] = 0
+                            walls.remove(blocks[j])
+
+                        rows_move_down = True
+
+                    blocks.clear()
+
+                if rows_move_down:
+                    move_blocks_down(rows_removed,y_lowest)
 
     if block_is_placed or player_block is None or block_held_active:
         block_is_placed = False
@@ -375,7 +439,6 @@ while running:
             for k in range(len(hold_object)):
                 new_x = hold_object[k].get_x() - (hold_object[k].get_width() * x_extra)
                 hold_object[k].set_x(new_x)
-
         else:
             block_current = block_next
 
