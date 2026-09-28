@@ -4,8 +4,8 @@ import pygame
 pygame.mixer.init()
 
 current_dir = os.path.dirname(__file__)
-directory_path = current_dir + "/../Resources/Music/"
+directory_path_music = current_dir + "/../Resources/Music/"
+directory_path_graphics = current_dir + "/../Resources/Graphics/"
 
-print("dir:", directory_path)
-
-main_theme = pygame.mixer.Sound(os.path.join(directory_path, "Tetris.mp3"))
+main_theme = pygame.mixer.Sound(os.path.join(directory_path_music, "Tetris.mp3"))
+icon = pygame.image.load(os.path.join(directory_path_graphics,"Tetris Logo.png"))

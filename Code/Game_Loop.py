@@ -89,7 +89,12 @@ def calculate_world_cords(cord, is_x):
 # (x_w - width_center) / block_size = cord
 
 def create_walls():
-    global walls, block_size
+    global walls, block_size, grid
+
+    for i in range(rows):
+        for j in range(columns):
+            grid[i][j] = 0
+    
     walls.clear()
     for i in range(rows):
         for j in range(columns):
@@ -112,7 +117,7 @@ def print_grid():
             print(grid[i][j],end=" ")
         print()
 
-def block_spawn(value):
+def block_spawn(value, is_player_spawn):
     global not_game_over, walls
 
     blocks = []
@@ -181,10 +186,11 @@ def block_spawn(value):
             obj = game_object.object(x + block_size * i, y + block_size, colour, block_size)
             blocks.append(obj)
 
-    for i in range(len(walls)):
-        for j in range(len(blocks)):
-            if colission_helper.AABB(walls[i],blocks[j]):
-                not_game_over = False
+    if is_player_spawn:
+        for i in range(len(walls)):
+            for j in range(len(blocks)):
+                if colission_helper.AABB(walls[i],blocks[j]):
+                    not_game_over = False
 
     return blocks
 
@@ -203,6 +209,7 @@ pygame.init()
 pygame.display.set_caption("Tetris")
 screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
+pygame.display.set_icon(resource.icon)
 
 def move_blocks_down(rows_removed, y_lowest):
     global grid, walls, columns, rows, block_size
@@ -222,10 +229,11 @@ def move_blocks_down(rows_removed, y_lowest):
 
                     for k in range(len(walls)):
                         if walls[k].get_y() == y_world_cords_origin and walls[k].get_x() == x_world_cords_origin and walls[k].get_y() < y_lowest:
-                            grid[i][j] = 0
                             walls[k].set_y(y_new)
                             
                             y_new_pos = calculate_grid_cords(y_new,False)
+
+                            grid[i][j] = 0
                             grid[y_new_pos][j] = 2
             j = j - 1
 
@@ -417,7 +425,7 @@ while running:
 
             block_current = block_held_storage
 
-            hold_object = block_spawn(block_held)
+            hold_object = block_spawn(block_held,False)
 
             for i in range(len(hold_object)):
                 new_x = hold_object[i].get_x() - width_walls_total/2
@@ -442,14 +450,14 @@ while running:
         else:
             block_current = block_next
 
-        player_block = block_spawn(block_drop_in)
+        player_block = block_spawn(block_drop_in,True)
 
         if block_held_active:
             block_held_active = False
         else:
             block_next = random.randint(blocks_min_max[0],blocks_min_max[1])
 
-        next_object = block_spawn(block_next)
+        next_object = block_spawn(block_next,False)
 
         x_extra = x_away(next_object,False)
 

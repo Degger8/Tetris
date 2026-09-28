@@ -56,14 +56,15 @@ def player(pygame, player_blocks, walls, button_press_buffer_more, block_next,
             elif keyInput[pygame.K_a]:
                 key_pressed = True
                 x = x - width
-            elif keyInput[pygame.K_s]:
+            
+            if keyInput[pygame.K_s]:
                 y = y + height
                 key_pressed = True
                 block_fast_down = True
-
-            if keyInput[pygame.K_SPACE]:
+            elif keyInput[pygame.K_SPACE]:
                 space_pressed = True
                 key_pressed = True
+                
             if keyInput[pygame.K_e]:
                 block_held = True
                 key_pressed = True
@@ -86,6 +87,8 @@ def player(pygame, player_blocks, walls, button_press_buffer_more, block_next,
 
                 j = len(player_blocks) - 1
                 y_farthest_up = None
+                y_distance = None
+                y_farthest_up_start_y = None
 
                 while j >= 0:
                     collided = False
@@ -102,36 +105,35 @@ def player(pygame, player_blocks, walls, button_press_buffer_more, block_next,
                                 if not y_farthest_up is None:
                                     if y_farthest_up > y_og:
                                         y_farthest_up = y_og
+                                        y_farthest_up_start_y = y_start
                                 else:
+                                    y_farthest_up_start_y = y_start
                                     y_farthest_up = y_og
+                                
                                 player_block_here.set_y(y_start)
 
                             if collided:
                                 break
                     j = j - 1
 
-                j = len(player_blocks) - 1
+                if y_farthest_up_start_y is not None:
+                    try:
+                        y_distance = y_farthest_up - y_farthest_up_start_y
 
-                while j >= 0:
-                    collided = False
-                    while not collided:
-                        y_og = player_blocks[j].get_y()
-                        y = y_og + player_blocks[j].get_height()
-                        player_blocks[j].set_y(y)
-                        for i in range(len(walls_temporary)):
-                            if colission_helper.AABB(player_blocks[j], walls_temporary[i]) and not collided:
-                                collided = True
+                        for l in range(len(player_blocks)):
+                            y_fall = player_blocks[l].get_y() + y_distance
+                            player_blocks[l].set_y(y_fall)
 
-                                y_new = y_og
-
-                                if y_farthest_up > y_og:
-                                    y_og = y_farthest_up
-
-                                player_blocks[j].set_y(y_new)
-                                walls_temporary.append(player_blocks[j])
-                            if collided:
-                                break
-                    j = j - 1
+                        for l in range(len(player_blocks)):
+                            for i in range(len(walls)):
+                                while colission_helper.AABB(player_blocks[l],walls[i]):
+                                    for m in range(len(player_blocks)):
+                                        y_move_out = player_blocks[m].get_y() - player_blocks[m].get_height()
+                                        player_blocks[m].set_y(y_move_out)
+                    except KeyError as e:
+                        print("an error occured!",e)
+                else:
+                    print("is none!")
             else:
                 for i in range(len(walls)):
                     if colission_helper.AABB(player_block, walls[i]) and not collided:
