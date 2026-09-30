@@ -1,3 +1,5 @@
+from inspect import FullArgSpec
+
 import pygame
 import numpy
 import random
@@ -7,6 +9,7 @@ import Resource_Loader as resource
 import Game_Object as game_object
 import Colission_Helper as colission_helper
 import Keyboard_Helper as keyboard_helper
+import Button as button
 
 resource.main_theme.play()
 
@@ -70,6 +73,21 @@ width_center = (screen_width - width_walls_total)/2
 height_center = (screen_height - height_walls_total)/2
 
 walls = []
+
+running = True
+fps = 60
+
+player_block = None
+block_held_active = False
+next_object = None
+hold_object = None
+block_next = random.randint(blocks_min_max[0],blocks_min_max[1])
+
+pygame.init()
+pygame.display.set_caption("Tetris")
+screen = pygame.display.set_mode((screen_width, screen_height))
+clock = pygame.time.Clock()
+pygame.display.set_icon(resource.icon)
 
 def calculate_grid_cords(cord, is_x):
     global width_center, height_center, block_size
@@ -194,23 +212,6 @@ def block_spawn(value, is_player_spawn):
 
     return blocks
 
-create_walls()
-
-running = True
-fps = 60
-
-player_block = None
-block_held_active = False
-next_object = None
-hold_object = None
-block_next = random.randint(blocks_min_max[0],blocks_min_max[1])
-
-pygame.init()
-pygame.display.set_caption("Tetris")
-screen = pygame.display.set_mode((screen_width, screen_height))
-clock = pygame.time.Clock()
-pygame.display.set_icon(resource.icon)
-
 def move_blocks_down(rows_removed, y_lowest):
     global grid, walls, columns, rows, block_size
 
@@ -316,6 +317,27 @@ def x_away(list, check_right):
                 break
     return x_extra
 
+b = button.button_object(100,100,150,100,[255,255,255],[0,0,0],"Hello!",20)
+mouse = game_object.object(0,0,[0,0,0],10)
+button_pressed = False
+while not button_pressed:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+        if event.type == pygame.MOUSEBUTTONUP:
+            if b.press(mouse):
+                button_pressed = True
+
+    mouse_pos = pygame.mouse.get_pos()
+    mouse.set_x(mouse_pos[0])
+    mouse.set_y(mouse_pos[1])
+
+    print("mouseX:",mouse.get_x(),"mouseY:",mouse.get_y())
+
+    renderer.render_button(b,pygame,screen)
+    pygame.display.flip()
+
+create_walls()
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
