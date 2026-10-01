@@ -317,38 +317,36 @@ def x_away(list, check_right):
                 break
     return x_extra
 
-b = button.button_object(100,100,150,100,[255,255,255],[0,0,0],"Hello!",20)
 mouse = game_object.object(0,0,[0,0,0],10)
-button_pressed = False
-while not button_pressed:
+create_walls()
+
+#Change with an automated system later.
+center_game_over_x = screen_width/2 - 75
+center_game_over_y = screen_height/2 - 50
+game_over = button.button_object(center_game_over_x,center_game_over_y,150,100,[255,255,255],[0,0,0],"Restart",20)
+
+while running:
+    button_up = False
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            pygame.quit()
+            running = False
         if event.type == pygame.MOUSEBUTTONUP:
-            if b.press(mouse):
-                button_pressed = True
+            button_up = True
 
+    keyInput = pygame.key.get_pressed()
     mouse_pos = pygame.mouse.get_pos()
     mouse.set_x(mouse_pos[0])
     mouse.set_y(mouse_pos[1])
 
-    print("mouseX:",mouse.get_x(),"mouseY:",mouse.get_y())
+    #replace later with a list!
+    if colission_helper.AABB(game_over,mouse):
+        game_over.set_hit(True)
+    else:
+        game_over.set_hit(False)
 
-    renderer.render_button(b,pygame,screen)
-    pygame.display.flip()
-
-create_walls()
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-    keyInput = pygame.key.get_pressed()
-
-    if player_block is not None:
-        if not not_game_over:
-            restart()
-        else:
+    if not_game_over:
+        if player_block is not None:
             keyboard_helper.set_outside_variables(block_held_active,block_is_placed)
             placeSkip = keyboard_helper.player(pygame,player_block,
                                             walls, button_press_buffer_more, block_next, timer_conversion,
@@ -416,7 +414,7 @@ while running:
 
                                 for k in range(len(walls)):
                                     if walls[k].get_x() == x and walls[k].get_y() == y:
-                                        blocks.append(walls[k]) 
+                                        blocks.append(walls[k])
 
                     if row_done:
                         print("blocks for removal:",len(blocks))
@@ -434,74 +432,83 @@ while running:
                 if rows_move_down:
                     move_blocks_down(rows_removed,y_lowest)
 
-    if block_is_placed or player_block is None or block_held_active:
-        block_is_placed = False
+        if block_is_placed or player_block is None or block_held_active:
+            block_is_placed = False
 
-        block_drop_in = block_next
-        if block_held_active:
-            if block_held != 0:
-                block_drop_in = block_held
-            block_held_storage = block_held
+            block_drop_in = block_next
+            if block_held_active:
+                if block_held != 0:
+                    block_drop_in = block_held
+                block_held_storage = block_held
 
-            block_held = block_current
+                block_held = block_current
 
-            block_current = block_held_storage
+                block_current = block_held_storage
 
-            hold_object = block_spawn(block_held,False)
+                hold_object = block_spawn(block_held,False)
 
-            for i in range(len(hold_object)):
-                new_x = hold_object[i].get_x() - width_walls_total/2
-                hold_object[i].set_x(new_x)
-
-            widthToMove = 0
-            collision = True
-            while collision:
-                collision = False
                 for i in range(len(hold_object)):
-                    for j in range(len(walls)):
-                        if colission_helper.AABB(hold_object[i], walls[j]) and not collision:
-                            for k in range(len(hold_object)):
-                                new_x = hold_object[k].get_x() - hold_object[k].get_width()
-                                hold_object[k].set_x(new_x)
-                            collision = True
+                    new_x = hold_object[i].get_x() - width_walls_total/2
+                    hold_object[i].set_x(new_x)
 
-            x_extra = x_away(hold_object,True)
-            for k in range(len(hold_object)):
-                new_x = hold_object[k].get_x() - (hold_object[k].get_width() * x_extra)
-                hold_object[k].set_x(new_x)
-        else:
-            block_current = block_next
+                widthToMove = 0
+                collision = True
+                while collision:
+                    collision = False
+                    for i in range(len(hold_object)):
+                        for j in range(len(walls)):
+                            if colission_helper.AABB(hold_object[i], walls[j]) and not collision:
+                                for k in range(len(hold_object)):
+                                    new_x = hold_object[k].get_x() - hold_object[k].get_width()
+                                    hold_object[k].set_x(new_x)
+                                collision = True
 
-        player_block = block_spawn(block_drop_in,True)
+                x_extra = x_away(hold_object,True)
+                for k in range(len(hold_object)):
+                    new_x = hold_object[k].get_x() - (hold_object[k].get_width() * x_extra)
+                    hold_object[k].set_x(new_x)
+            else:
+                block_current = block_next
 
-        if block_held_active:
-            block_held_active = False
-        else:
-            block_next = random.randint(blocks_min_max[0],blocks_min_max[1])
+            player_block = block_spawn(block_drop_in,True)
 
-        next_object = block_spawn(block_next,False)
+            if block_held_active:
+                block_held_active = False
+            else:
+                block_next = random.randint(blocks_min_max[0],blocks_min_max[1])
 
-        x_extra = x_away(next_object,False)
+            next_object = block_spawn(block_next,False)
 
-        for i in range(len(next_object)):
-            new_x = next_object[i].get_x() + (x_extra * next_object[i].get_width()) + width_walls_total/2
-            next_object[i].set_x(new_x)
+            x_extra = x_away(next_object,False)
 
-    if player_block is not None:
-        renderer.clear_objects(pygame,screen)
-        for i in range(len(walls)):
-            renderer.render_object(walls[i], pygame, screen)
-
-        for i in range(len(player_block)):
-            renderer.render_object(player_block[i], pygame, screen)
-
-        if next_object is not None:
             for i in range(len(next_object)):
-                renderer.render_object(next_object[i], pygame, screen)
+                new_x = next_object[i].get_x() + (x_extra * next_object[i].get_width()) + width_walls_total/2
+                next_object[i].set_x(new_x)
 
-        if hold_object is not None:
-            for i in range(len(hold_object)):
-                renderer.render_object(hold_object[i], pygame, screen)
+        if player_block is not None:
+            renderer.clear_objects(pygame,screen)
+            for i in range(len(walls)):
+                renderer.render_object(walls[i], pygame, screen)
 
-        pygame.display.flip()
+            for i in range(len(player_block)):
+                renderer.render_object(player_block[i], pygame, screen)
+
+            if next_object is not None:
+                for i in range(len(next_object)):
+                    renderer.render_object(next_object[i], pygame, screen)
+
+            if hold_object is not None:
+                for i in range(len(hold_object)):
+                    renderer.render_object(hold_object[i], pygame, screen)
+
+    else:
+        #GameOver menu:
+        if button_up:
+            if game_over.press(mouse):
+                not_game_over = True
+                restart()
+
+        renderer.render_button(game_over,pygame,screen)
+
+    pygame.display.flip()
     clock.tick(fps)
