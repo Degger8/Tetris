@@ -22,6 +22,8 @@ class button_object(object.object):
         self.text = font.render(text, True, text_colour,colour)
         self.text_rect = self.text.get_rect()
 
+        self.text_string = text
+
         self.text_dark = font.render(text, True, text_colour,self.colour_dark)
         self.text_rect_dark = self.text_dark.get_rect()
 
@@ -74,3 +76,6 @@ class button_object(object.object):
 
     def get_colour_dark(self):
         return self.colour_dark
+
+    def get_text_string(self):
+        return self.text_string

@@ -5,6 +5,15 @@ timer = 0
 block_held = False
 block_is_placed = False
 block_fast_down = False
+game_active = True
+
+def get_game_active():
+    global game_active
+    return game_active
+
+def set_game_active(value):
+    global game_active
+    game_active = value
 
 def get_block_held():
     global block_held
@@ -26,7 +35,7 @@ def set_outside_variables(block_heldN,block_is_placedN):
 def player(pygame, player_blocks, walls, button_press_buffer_more, block_next,
            timer_conversion, button_press_buffer,
            keyInput):
-    global timer, block_held, block_is_placed, block_fast_down
+    global timer, block_held, block_is_placed, block_fast_down, game_active
     placeSkip = False
 
     block_fast_down = False
@@ -72,6 +81,10 @@ def player(pygame, player_blocks, walls, button_press_buffer_more, block_next,
                 print("Rotate")
                 key_pressed = True
 
+            if keyInput[pygame.K_q]:
+                game_active = False
+                key_pressed = True
+
             player_block.set_x(x)
             player_block.set_y(y)
 
@@ -82,12 +95,8 @@ def player(pygame, player_blocks, walls, button_press_buffer_more, block_next,
                 block_fast_down = True
                 player_block.set_x(x_og)
 
-                #TODO: fix this, so the blocks dont get mutulated.
-                walls_temporary = walls
-
                 j = len(player_blocks) - 1
                 y_farthest_up = None
-                y_distance = None
                 y_farthest_up_start_y = None
 
                 while j >= 0:
