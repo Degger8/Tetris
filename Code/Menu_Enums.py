@@ -5,3 +5,5 @@ class Menu(Enum):
     GAME_OVER = "GAME OVER"
     PAUSE = "PAUSE"
     GAME = "GAME"
+    MAINMENU = "MAIN MENU"
+    OPTIONS = "OPTIONS"

@@ -1,10 +1,12 @@
 import time
 import Colission_Helper as colission_helper
+import Resource_Loader as resource
 
 timer = 0
 block_held = False
 block_is_placed = False
 block_fast_down = False
+block_hold_already_hit = False
 game_active = True
 
 def get_game_active():
@@ -14,6 +16,10 @@ def get_game_active():
 def set_game_active(value):
     global game_active
     game_active = value
+
+def set_block_hold_already_hit(value):
+    global block_hold_already_hit
+    block_hold_already_hit = value
 
 def get_block_held():
     global block_held
@@ -32,10 +38,10 @@ def set_outside_variables(block_heldN,block_is_placedN):
     block_held = block_heldN
     block_is_placed = block_is_placedN
 
-def player(pygame, player_blocks, walls, button_press_buffer_more, block_next,
-           timer_conversion, button_press_buffer,
+def player(pygame, player_blocks, walls, button_press_buffer_more,
+           timer_conversion, button_press_buffer, sfx_play,
            keyInput):
-    global timer, block_held, block_is_placed, block_fast_down, game_active
+    global timer, block_held, block_is_placed, block_fast_down, game_active, block_hold_already_hit
     placeSkip = False
 
     block_fast_down = False
@@ -74,9 +80,10 @@ def player(pygame, player_blocks, walls, button_press_buffer_more, block_next,
                 space_pressed = True
                 key_pressed = True
                 
-            if keyInput[pygame.K_e]:
+            if keyInput[pygame.K_e] and not block_hold_already_hit:
                 block_held = True
                 key_pressed = True
+                block_hold_already_hit = True
             if keyInput[pygame.K_r] and button_press_buffer_more + timer < time.time() * timer_conversion:
                 print("Rotate")
                 key_pressed = True
@@ -143,6 +150,10 @@ def player(pygame, player_blocks, walls, button_press_buffer_more, block_next,
                         print("an error occured!",e)
                 else:
                     print("is none!")
+
+                if sfx_play:
+                    resource.block_down_fast.stop()
+                    resource.block_down_fast.play()
             else:
                 for i in range(len(walls)):
                     if colission_helper.AABB(player_block, walls[i]) and not collided:
@@ -156,6 +167,10 @@ def player(pygame, player_blocks, walls, button_press_buffer_more, block_next,
 
         if key_pressed:
             timer = time.time() * timer_conversion
+
+            if not space_pressed and sfx_play and not collided:
+                resource.button_pressed.stop()
+                resource.button_pressed.play()
 
 
     return placeSkip
