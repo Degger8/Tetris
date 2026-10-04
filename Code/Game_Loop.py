@@ -10,6 +10,9 @@ import Keyboard_Helper as keyboard_helper
 import Button as button
 import Button_Enums as button_enum
 import Menu_Enums as menu_enum
+import File_Helper as file_helper
+
+#TODO: If the !!game is done!! Make a constant class for every constant variable + make comments explaining the why and how in German + English
 
 # Blocks next/hold:
 # 1 -> I shape (long)
@@ -57,6 +60,7 @@ text_colour = [0,0,0]
 screen_colour = [0,0,0]
 text_size = 20
 text_size_title = 100
+speed_level = 1
 
 text_game_over_buttons = [button_enum.Button_Text.RESTART.value, button_enum.Button_Text.MENU.value, button_enum.Button_Text.EXIT.value]
 text_pause_buttons = [button_enum.Button_Text.RESUME.value, button_enum.Button_Text.MENU.value, button_enum.Button_Text.EXIT.value]
@@ -65,6 +69,7 @@ text_main_menu_buttons = [button_enum.Button_Text.START.value, button_enum.Butto
                           button_enum.Button_Text.OPTIONS.value, button_enum.Button_Text.EXIT.value]
 
 text_options_buttons = [button_enum.Button_Text.MUSIC_ON.value, button_enum.Button_Text.SFX_ON.value, button_enum.Button_Text.MENU.value]
+text_highscore_buttons = [button_enum.Button_Text.MENU.value]
 
 points = 0
 
@@ -296,9 +301,8 @@ def lowest_done_row():
     return_y = calculate_world_cords(lowest_y,False)
     return return_y
 
-
 def restart():
-    global player_block, block_held, block_next, block_held_active, next_object, hold_object, block_is_placed, game_state
+    global player_block, block_held, block_next, block_held_active, next_object, hold_object, block_is_placed, game_state, points, speed_level
     create_walls()
     player_block = None
     block_held = 0
@@ -306,6 +310,8 @@ def restart():
     block_held_active = False
     next_object = None
     hold_object = None
+    points = 0
+    speed_level = 1
     block_is_placed = False
     game_state = menu_enum.Menu.GAME.value
     keyboard_helper.set_game_active(True)
@@ -340,7 +346,7 @@ def x_away(list, check_right):
     return x_extra
 
 def game_logic():
-    global player_block, block_held_active, block_next, block_held_active, block_is_placed, block_held, block_current, timer_go_down, next_object, hold_object, game_state, sfx_play
+    global player_block, block_held_active, block_next, block_held_active, block_is_placed, block_held, block_current, timer_go_down, next_object, hold_object, game_state, sfx_play, points, speed_level
 
     if player_block is not None:
         keyboard_helper.set_outside_variables(block_held_active, block_is_placed)
@@ -398,6 +404,16 @@ def game_logic():
                     grid[y_array][x_array] = 2
 
             rows_removed = rows_done_count()
+
+            if rows_removed == 1:
+                points = points + (100 * speed_level)
+            if rows_removed == 2:
+                points = points + (300 * speed_level)
+            if rows_removed == 3:
+                points = points + (500 * speed_level)
+            if rows_removed == 4:
+                points = points + (800 * speed_level)
+
             y_lowest = lowest_done_row()
             rows_move_down = False
             for i in range(rows):
@@ -484,7 +500,7 @@ def game_logic():
             next_object[i].set_x(new_x)
 
 def render_objects():
-    global player_block, next_object, hold_object, walls, buttons, game_state, show_buttons, not_in_main_menu, screen_colour, text_size_title, text_title_colour, screen_width
+    global player_block, next_object, hold_object, walls, buttons, game_state, show_buttons, not_in_main_menu, screen_colour, text_size_title, text_title_colour, screen_width, screen_height, text_size, points
 
     if buttons is not None:
         for button in buttons:
@@ -494,6 +510,7 @@ def render_objects():
                 button.set_hit(False)
 
     renderer.clear_objects(pygame, screen, screen_colour)
+    
     if not_in_main_menu:
         if walls is not None:
             for i in range(len(walls)):
@@ -513,11 +530,19 @@ def render_objects():
 
     x = screen_width/2
     y = 50 + text_size_title/2
+    
+    y_score = screen_height - text_size - 5
 
-    if game_state == menu_enum.Menu.MAINMENU.value or game_state == menu_enum.Menu.OPTIONS.value:
+    if game_state == menu_enum.Menu.MAINMENU.value or game_state == menu_enum.Menu.OPTIONS.value or game_state == menu_enum.Menu.HIGHSCORE.value:
         renderer.render_text(pygame,screen,"Tetris",text_size_title,text_title_colour,screen_colour,y,x)
     elif game_state == menu_enum.Menu.GAME_OVER.value:
         renderer.render_text(pygame,screen,"Game Over!",text_size_title,text_title_colour,screen_colour,y,x)
+    elif game_state == menu_enum.Menu.GAME.value:
+        text = "Points: "+str(points)
+        renderer.render_text(pygame,screen,str(text),text_size,text_title_colour,screen_colour,y_score,x)
+
+    if game_state == menu_enum.Menu.HIGHSCORE.value:
+        show_scores()
 
     if show_buttons:
         if buttons is not None:
@@ -537,10 +562,12 @@ def button_logic(mouse_object, button_up):
         button_todo(text_of_button)
 
 def button_todo(text):
-    global running, game_state, not_in_main_menu, sfx_play, text_options_buttons, started, music_play
+    global running, game_state, not_in_main_menu, sfx_play, text_options_buttons, started, music_play, points
 
     button_sfx_play = False
     if text == button_enum.Button_Text.RESTART.value:
+        file_helper.set_score(points)
+
         button_sfx_play = True
         restart()
         not_in_main_menu = True
@@ -550,6 +577,8 @@ def button_todo(text):
         running = False
 
     elif text == button_enum.Button_Text.MENU.value:
+        file_helper.set_score(points)
+
         button_sfx_play = True
         not_in_main_menu = False
         if game_state == menu_enum.Menu.PAUSE.value or game_state == menu_enum.Menu.GAME_OVER.value:
@@ -570,8 +599,7 @@ def button_todo(text):
         started = False
 
     elif text == button_enum.Button_Text.HIGHSCORE.value:
-        button_sfx_play = True
-        print("Highscore not added yet.")
+        game_state = menu_enum.Menu.HIGHSCORE.value
 
     elif text == button_enum.Button_Text.OPTIONS.value:
         button_sfx_play = True
@@ -638,6 +666,35 @@ def make_buttons(button_text):
 
         y_down += button_height + size_inbetween_buttons
 
+def menu_toggle():
+    global game_state, text_pause_buttons, text_game_over_buttons, text_main_menu_buttons, text_options_buttons, text_highscore_buttons
+
+    if game_state == menu_enum.Menu.PAUSE.value:
+        make_buttons(text_pause_buttons)
+    elif game_state == menu_enum.Menu.GAME_OVER.value:
+        make_buttons(text_game_over_buttons)
+    elif game_state == menu_enum.Menu.MAINMENU.value:
+        make_buttons(text_main_menu_buttons)
+    elif game_state == menu_enum.Menu.OPTIONS.value:
+        make_buttons(text_options_buttons)
+    elif game_state == menu_enum.Menu.HIGHSCORE.value:
+        make_buttons(text_highscore_buttons)
+
+def show_scores():
+    global text_title_colour, screen_colour, screen_width, button_height, screen_height
+
+    text_size_score = 50
+    apart_extra = 10
+    scores = file_helper.read()
+
+    for i in range(len(scores)):
+        score_text = str(i + 1) + ". " + str(scores[i])
+
+        y = screen_height/2 + button_height + apart_extra + text_size_score * i
+        x = screen_width / 2
+
+        renderer.render_text(pygame,screen,str(score_text),text_size_score,text_title_colour,screen_colour,y,x)
+
 mouse = game_object.object(0,0,[0,0,0],10)
 create_walls()
 
@@ -647,7 +704,7 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.MOUSEBUTTONUP:
+        elif event.type == pygame.MOUSEBUTTONUP:
             button_up = True
 
     keyInput = pygame.key.get_pressed()
@@ -660,14 +717,7 @@ while running:
         game_logic()
     else:
         show_buttons = True
-        if game_state == menu_enum.Menu.PAUSE.value:
-            make_buttons(text_pause_buttons)
-        elif game_state == menu_enum.Menu.GAME_OVER.value:
-            make_buttons(text_game_over_buttons)
-        elif game_state == menu_enum.Menu.MAINMENU.value:
-            make_buttons(text_main_menu_buttons)
-        elif game_state == menu_enum.Menu.OPTIONS.value:
-            make_buttons(text_options_buttons)
+        menu_toggle()
 
         button_logic(mouse,button_up)
 

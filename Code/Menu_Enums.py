@@ -7,3 +7,4 @@ class Menu(Enum):
     GAME = "GAME"
     MAINMENU = "MAIN MENU"
     OPTIONS = "OPTIONS"
+    HIGHSCORE = "HIGHSCORE"
