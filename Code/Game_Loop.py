@@ -12,7 +12,7 @@ import Button_Enums as button_enum
 import Menu_Enums as menu_enum
 import File_Helper as file_helper
 
-#TODO: If the !!game is done!! Make a constant class for every constant variable + make comments explaining the why and how in German + English
+#TODO: If the !!game is done!! Make comments explaining the why and how in German + English
 
 # Blocks next/hold:
 # 1 -> I shape (long)
