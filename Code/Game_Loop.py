@@ -47,10 +47,11 @@ extra_width = 600
 extra_height = 250
 
 button_press_buffer = 100
-button_press_buffer_more = 500
 timer_conversion = 1000
 timer_go_down = 0
 buffer_go_down = 750
+buffer_go_down_og = buffer_go_down
+decrease = 100
 
 button_height = 80
 button_width = 200
@@ -72,6 +73,8 @@ text_options_buttons = [button_enum.Button_Text.MUSIC_ON.value, button_enum.Butt
 text_highscore_buttons = [button_enum.Button_Text.MENU.value]
 
 points = 0
+points_faster_down = 2500
+points_faster_down_og = points_faster_down
 
 not_in_main_menu = False
 block_is_placed = False
@@ -302,7 +305,7 @@ def lowest_done_row():
     return return_y
 
 def restart():
-    global player_block, block_held, block_next, block_held_active, next_object, hold_object, block_is_placed, game_state, points, speed_level
+    global player_block, block_held, block_next, block_held_active, next_object, hold_object, block_is_placed, game_state, points, speed_level, buffer_go_down, buffer_go_down_og, points_faster_down, points_faster_down_og, speed_level
     create_walls()
     player_block = None
     block_held = 0
@@ -315,6 +318,9 @@ def restart():
     block_is_placed = False
     game_state = menu_enum.Menu.GAME.value
     keyboard_helper.set_game_active(True)
+    buffer_go_down = buffer_go_down_og
+    points_faster_down = points_faster_down_og
+    speed_level = 1
 
 def x_away(list, check_right):
     x_extra = 1
@@ -346,7 +352,7 @@ def x_away(list, check_right):
     return x_extra
 
 def game_logic():
-    global player_block, block_held_active, block_next, block_held_active, block_is_placed, block_held, block_current, timer_go_down, next_object, hold_object, game_state, sfx_play, points, speed_level
+    global player_block, block_held_active, block_next, block_held_active, block_is_placed, block_held, block_current, timer_go_down, next_object, hold_object, game_state, sfx_play, points, speed_level, points_faster_down, points_faster_down_og, decrease, buffer_go_down, speed_level
 
     if player_block is not None:
         keyboard_helper.set_outside_variables(block_held_active, block_is_placed)
@@ -413,6 +419,13 @@ def game_logic():
                 points = points + (500 * speed_level)
             if rows_removed == 4:
                 points = points + (800 * speed_level)
+
+            if points > points_faster_down:
+                points_faster_down = points_faster_down + points_faster_down_og
+                buffer_go_down = buffer_go_down - decrease
+                speed_level = speed_level + 1
+                if buffer_go_down < 0:
+                    buffer_go_down = decrease
 
             y_lowest = lowest_done_row()
             rows_move_down = False

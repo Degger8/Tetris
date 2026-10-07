@@ -93,7 +93,6 @@ def turn_block(player_blocks,walls):
         width = player_block.get_width()
         height = player_block.get_height()
 
-    #TODO: Fix Space down collision bug.
     if length_of_grid and width and height is not None:
         for i in range(len(player_blocks)):
             player_block = player_blocks[i]
@@ -150,8 +149,6 @@ def turn_block(player_blocks,walls):
 
             if no_collision:
                 collision = False
-
-        print("x: " + str(x_length_before) + " y: " + str(y_length_before) + " block amount: " + str(blocks_total) + " max grid size: " + str(length_of_grid) + " x world first: " + str(x_first) + " y first: " + str(y_first))
 
 def player(pygame, player_blocks, walls, timer_conversion,
            button_press_buffer, sfx_play,
@@ -256,12 +253,17 @@ def player(pygame, player_blocks, walls, timer_conversion,
                             y_fall = player_blocks[l].get_y() + y_distance
                             player_blocks[l].set_y(y_fall)
 
-                        for l in range(len(player_blocks)):
-                            for i in range(len(walls)):
-                                while colission_helper.AABB(player_blocks[l],walls[i]):
-                                    for m in range(len(player_blocks)):
-                                        y_move_out = player_blocks[m].get_y() - player_blocks[m].get_height()
-                                        player_blocks[m].set_y(y_move_out)
+                        collision = True
+
+                        while collision:
+                            collision = False
+                            for l in range(len(player_blocks)):
+                                for i in range(len(walls)):
+                                    while colission_helper.AABB(player_blocks[l],walls[i]):
+                                        collision = True
+                                        for m in range(len(player_blocks)):
+                                            y_move_out = player_blocks[m].get_y() - player_blocks[m].get_height()
+                                            player_blocks[m].set_y(y_move_out)
                     except KeyError as e:
                         print("an error occured!",e)
                 else:
