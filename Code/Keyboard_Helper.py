@@ -1,6 +1,7 @@
 import time
 import Colission_Helper as colission_helper
 import Resource_Loader as resource
+import numpy
 
 timer = 0
 block_held = False
@@ -38,11 +39,126 @@ def set_outside_variables(block_heldN,block_is_placedN):
     block_held = block_heldN
     block_is_placed = block_is_placedN
 
-def player(pygame, player_blocks, walls, button_press_buffer_more,
-           timer_conversion, button_press_buffer, sfx_play,
+def turn_block(player_blocks,walls):
+    blocks_total = len(player_blocks)
+    x_length_before = 0
+    y_length_before = 0
+
+    blocks_before = []
+    for i in range(len(player_blocks)):
+        player_block = player_blocks[i]
+
+        add_x = True
+        add_y = True
+
+        for j in range(len(blocks_before)):
+            block_before = blocks_before[j]
+            if player_block.get_x() == block_before.get_x():
+                add_x = False
+            if player_block.get_y() == block_before.get_y():
+                add_y = False
+
+        if add_x:
+            x_length_before = x_length_before + 1
+        if add_y:
+            y_length_before = y_length_before + 1
+
+        blocks_before.append(player_block)
+
+    length_of_grid = None
+    if x_length_before > y_length_before:
+        length_of_grid = x_length_before
+    elif y_length_before > x_length_before:
+        length_of_grid = y_length_before
+    else:
+        length_of_grid = x_length_before
+
+    x_first = None
+    y_first = None
+    width = None
+    height = None
+
+    for i in range(len(player_blocks)):
+        player_block = player_blocks[i]
+        if x_first is not None and y_first is not None:
+            if x_first > player_block.get_x():
+                x_first = player_block.get_x()
+
+            if y_first > player_block.get_y():
+                y_first = player_block.get_y()
+        else:
+            x_first = player_block.get_x()
+            y_first = player_block.get_y()
+
+        width = player_block.get_width()
+        height = player_block.get_height()
+
+    #TODO: Fix Space down collision bug.
+    if length_of_grid and width and height is not None:
+        for i in range(len(player_blocks)):
+            player_block = player_blocks[i]
+
+            x_to_cord = 0
+            y_to_cord = 0
+
+            x_now = x_first
+            y_now = y_first
+
+            for j in range(blocks_total):
+                if x_now != player_block.get_x():
+                    x_now = x_now + player_block.get_width()
+                    x_to_cord = x_to_cord + 1
+
+                if y_now != player_block.get_y():
+                    y_now = y_now + player_block.get_height()
+                    y_to_cord = y_to_cord + 1
+
+            x_inverse = y_to_cord - blocks_total
+            y_inverse = x_to_cord
+
+            if x_inverse < 0:
+                x_inverse *= -1
+
+            y_pos = y_inverse * player_block.get_height() + y_first
+            x_pos = x_inverse * player_block.get_width() + x_first
+
+            move_back = y_length_before * player_block.get_width()
+            x_pos = x_pos - move_back
+
+            player_block.set_y(y_pos)
+            player_block.set_x(x_pos)
+
+        collision = True
+        while collision:
+            no_collision = True
+
+            for i in range(len(player_blocks)):
+                player_block = player_blocks[i]
+                for j in range(len(walls)):
+                    wall = walls[j]
+                    if colission_helper.AABB(wall, player_block):
+                        no_collision = False
+
+                        direction = 1
+                        if x_first < player_block.get_x():
+                            direction = -1
+
+                        for k in range(len(player_blocks)):
+                            new = player_blocks[k]
+                            x_new = new.get_x() + new.get_width() * direction
+                            new.set_x(x_new)
+
+            if no_collision:
+                collision = False
+
+        print("x: " + str(x_length_before) + " y: " + str(y_length_before) + " block amount: " + str(blocks_total) + " max grid size: " + str(length_of_grid) + " x world first: " + str(x_first) + " y first: " + str(y_first))
+
+def player(pygame, player_blocks, walls, timer_conversion,
+           button_press_buffer, sfx_play,
            keyInput):
     global timer, block_held, block_is_placed, block_fast_down, game_active, block_hold_already_hit
     placeSkip = False
+    r_pressed = False
 
     block_fast_down = False
     if button_press_buffer + timer < time.time() * timer_conversion:
@@ -84,8 +200,8 @@ def player(pygame, player_blocks, walls, button_press_buffer_more,
                 block_held = True
                 key_pressed = True
                 block_hold_already_hit = True
-            if keyInput[pygame.K_r] and button_press_buffer_more + timer < time.time() * timer_conversion:
-                print("Rotate")
+            if keyInput[pygame.K_r]:
+                r_pressed = True
                 key_pressed = True
 
             if keyInput[pygame.K_q]:
@@ -172,5 +288,7 @@ def player(pygame, player_blocks, walls, button_press_buffer_more,
                 resource.button_pressed.stop()
                 resource.button_pressed.play()
 
+    if r_pressed:
+        turn_block(player_blocks,walls)
 
     return placeSkip

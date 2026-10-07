@@ -351,7 +351,7 @@ def game_logic():
     if player_block is not None:
         keyboard_helper.set_outside_variables(block_held_active, block_is_placed)
         placeSkip = keyboard_helper.player(pygame, player_block,
-                                           walls, button_press_buffer_more, timer_conversion,
+                                           walls, timer_conversion,
                                            button_press_buffer, sfx_play, keyInput)
 
         block_held_active = keyboard_helper.get_block_held()
@@ -628,7 +628,6 @@ def on_off_toggle(value1, value2, insert_into, play):
         music_toggle = music_play
 
     pos = None
-    text_insert = None
 
     for i in range(len(insert_into)):
         if insert_into[i] == value1 or insert_into[i] == value2:
