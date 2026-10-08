@@ -113,6 +113,10 @@ def get_last_x_or_y(player_blocks, return_x):
         return y_first
 
 def turn_block(player_blocks,walls):
+    not_valid = False
+    old = deepcopy(player_blocks)
+    time_not_valid = 0.05
+
     blocks_total = len(player_blocks)
     y_length_before = blocks_on_y_or_x(False,player_blocks)
 
@@ -163,6 +167,7 @@ def turn_block(player_blocks,walls):
             player_block.set_x(x_pos)
 
         collision = True
+        timer = time.time()
         while collision:
             no_collision = True
 
@@ -204,8 +209,15 @@ def turn_block(player_blocks,walls):
                                 y_new = new.get_y() - new.get_height()
                                 new.set_y(y_new)
 
+            if timer + time_not_valid < time.time():
+                collision = False
+                not_valid = True
+
             if no_collision:
                 collision = False
+
+    if not_valid:
+        player_blocks[:] = old
 
 def player(pygame, player_blocks, walls, timer_conversion,
            button_press_buffer, sfx_play,
