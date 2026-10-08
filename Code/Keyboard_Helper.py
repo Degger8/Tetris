@@ -1,7 +1,9 @@
 import time
 import Colission_Helper as colission_helper
 import Resource_Loader as resource
-import numpy
+import Game_Object as object
+import Renderer as renderer
+from copy import deepcopy
 
 timer = 0
 block_held = False
@@ -39,12 +41,10 @@ def set_outside_variables(block_heldN,block_is_placedN):
     block_held = block_heldN
     block_is_placed = block_is_placedN
 
-def turn_block(player_blocks,walls):
-    blocks_total = len(player_blocks)
-    x_length_before = 0
-    y_length_before = 0
-
+def blocks_on_y_or_x(return_x,player_blocks):
     blocks_before = []
+    x = 0
+    y = 0
     for i in range(len(player_blocks)):
         player_block = player_blocks[i]
 
@@ -59,24 +59,20 @@ def turn_block(player_blocks,walls):
                 add_y = False
 
         if add_x:
-            x_length_before = x_length_before + 1
+            x = x + 1
         if add_y:
-            y_length_before = y_length_before + 1
+            y = y + 1
 
         blocks_before.append(player_block)
 
-    length_of_grid = None
-    if x_length_before > y_length_before:
-        length_of_grid = x_length_before
-    elif y_length_before > x_length_before:
-        length_of_grid = y_length_before
+    if return_x:
+        return x
     else:
-        length_of_grid = x_length_before
+        return y
 
+def get_first_x_or_y(player_blocks,return_x):
     x_first = None
     y_first = None
-    width = None
-    height = None
 
     for i in range(len(player_blocks)):
         player_block = player_blocks[i]
@@ -90,10 +86,49 @@ def turn_block(player_blocks,walls):
             x_first = player_block.get_x()
             y_first = player_block.get_y()
 
+    if return_x:
+        return x_first
+    else:
+        return y_first
+
+def get_last_x_or_y(player_blocks, return_x):
+    x_first = None
+    y_first = None
+
+    for i in range(len(player_blocks)):
+        player_block = player_blocks[i]
+        if x_first is not None and y_first is not None:
+            if x_first < player_block.get_x():
+                x_first = player_block.get_x()
+
+            if y_first < player_block.get_y():
+                y_first = player_block.get_y()
+        else:
+            x_first = player_block.get_x()
+            y_first = player_block.get_y()
+
+    if return_x:
+        return x_first
+    else:
+        return y_first
+
+def turn_block(player_blocks,walls):
+    blocks_total = len(player_blocks)
+    y_length_before = blocks_on_y_or_x(False,player_blocks)
+
+    x_first = get_first_x_or_y(player_blocks,True)
+    y_first = get_first_x_or_y(player_blocks,False)
+    width = None
+    height = None
+
+    for i in range(len(player_blocks)):
+        player_block = player_blocks[i]
+
         width = player_block.get_width()
         height = player_block.get_height()
+        break
 
-    if length_of_grid and width and height is not None:
+    if width and height is not None:
         for i in range(len(player_blocks)):
             player_block = player_blocks[i]
 
@@ -139,20 +174,42 @@ def turn_block(player_blocks,walls):
                         no_collision = False
 
                         direction = 1
-                        if x_first < player_block.get_x():
+
+                        if x_first < wall.get_x():
                             direction = -1
+
+                        is_free_x = True
+                        for k in range(len(player_blocks)):
+                            player_block = player_blocks[k]
+
+                            object_direction_free = object.object(player_block.get_x(),player_block.get_y(),None,None)
+
+                            object_direction_free.set_width(player_block.get_width())
+                            object_direction_free.set_height(player_block.get_height())
+
+                            for t in range(len(player_blocks)):
+                                x_new = object_direction_free.get_x() + player_block.get_width() * direction
+                                object_direction_free.set_x(x_new)
+
+                            for l in range(len(walls)):
+                                if colission_helper.AABB(object_direction_free,walls[l]):
+                                    is_free_x = False
 
                         for k in range(len(player_blocks)):
                             new = player_blocks[k]
-                            x_new = new.get_x() + new.get_width() * direction
-                            new.set_x(x_new)
+                            if is_free_x:
+                                x_new = new.get_x() + new.get_width() * direction
+                                new.set_x(x_new)
+                            else:
+                                y_new = new.get_y() - new.get_height()
+                                new.set_y(y_new)
 
             if no_collision:
                 collision = False
 
 def player(pygame, player_blocks, walls, timer_conversion,
            button_press_buffer, sfx_play,
-           keyInput):
+           keyInput,screen):
     global timer, block_held, block_is_placed, block_fast_down, game_active, block_hold_already_hit
     placeSkip = False
     r_pressed = False

@@ -267,6 +267,13 @@ def move_blocks_down(rows_removed, y_lowest):
                             y_new_pos = calculate_grid_cords(y_new,False)
 
                             grid[i][j] = 0
+
+                            if y_new_pos >= len(grid):
+                                y_new_pos = len(grid) - 2
+
+                                y_new = y_new - walls[k].get_height() * 2
+                                walls[k].set_y(y_new)
+
                             grid[y_new_pos][j] = 2
             j = j - 1
 
@@ -352,13 +359,13 @@ def x_away(list, check_right):
     return x_extra
 
 def game_logic():
-    global player_block, block_held_active, block_next, block_held_active, block_is_placed, block_held, block_current, timer_go_down, next_object, hold_object, game_state, sfx_play, points, speed_level, points_faster_down, points_faster_down_og, decrease, buffer_go_down, speed_level
+    global player_block, block_held_active, block_next, block_held_active, block_is_placed, block_held, block_current, timer_go_down, next_object, hold_object, game_state, sfx_play, points, speed_level, points_faster_down, points_faster_down_og, decrease, buffer_go_down, speed_level, screen
 
     if player_block is not None:
         keyboard_helper.set_outside_variables(block_held_active, block_is_placed)
         placeSkip = keyboard_helper.player(pygame, player_block,
                                            walls, timer_conversion,
-                                           button_press_buffer, sfx_play, keyInput)
+                                           button_press_buffer, sfx_play, keyInput, screen)
 
         block_held_active = keyboard_helper.get_block_held()
         block_is_placed = keyboard_helper.get_block_is_placed()
