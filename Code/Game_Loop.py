@@ -12,7 +12,6 @@ import Button_Enums as button_enum
 import Menu_Enums as menu_enum
 import File_Helper as file_helper
 import Global_Variables as globals
-from copy import deepcopy
 
 #TODO: Add Window resizing.
 
