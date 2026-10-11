@@ -3,6 +3,9 @@ import pygame
 
 pygame.mixer.init()
 
+#OS ist eine Bibliothek, um Sachen vom OS zu laden. Es nimmt das Basisverzeichnis und fügt den richtigen Dateiweg hinzu, um die benötigte Resource zu erreichen.
+
+#os is a library for the users os. It gets the base directory name and appends it with the right directory path, to reach the right resources.
 current_dir = os.path.dirname(__file__)
 directory_path_music = current_dir + "/../Resources/Music/"
 directory_path_graphics = current_dir + "/../Resources/Graphics/"
@@ -18,6 +21,9 @@ ui_button = pygame.mixer.Sound(os.path.join(directory_path_sfx,"UI button press.
 
 icon = pygame.image.load(os.path.join(directory_path_graphics,"Tetris Logo.png"))
 
+#Benutzt die geladenen Musik Dateien und stoppt sie.
+
+#Used the loaded music tracks, to stop them dead in their track.
 def stop_music():
     global main_theme, menu_theme
 

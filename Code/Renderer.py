@@ -1,3 +1,7 @@
+#Eine pygame Methode wird benutzt um Rechtecke für das Spiel zu zeichnen. Dies ist auch eine Hilfsklasse, welche die Rendering Methoden des Spiels enthält-
+
+#A pygame method is used to draw rectangles for the game, this is a helper class, containing the rendering methods of the game.
+
 def render_object(object, pygame, screen):
     rectangle = pygame.Rect(object.x, object.y, object.width, object.height)
     pygame.draw.rect(screen, object.colour, rectangle)
@@ -19,6 +23,7 @@ def render_button(object, pygame, screen):
 
     screen.blit(text, rectangle_text)
 
+#Clears the screen. | Löscht den Bildschirm.
 def clear_objects(pygame, screen, colour):
     w, h = pygame.display.get_surface().get_size()
 

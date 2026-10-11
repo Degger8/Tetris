@@ -12,7 +12,7 @@ import Button_Enums as button_enum
 import Menu_Enums as menu_enum
 import File_Helper as file_helper
 
-#TODO: If the !!game is done!! Make comments explaining the why and how in German + English
+#TODO: Add a Constants class + Window resizing.
 
 # Blocks next/hold:
 # 1 -> I shape (long)
@@ -29,6 +29,7 @@ import File_Helper as file_helper
 # 3 -> Player block
 # 4 -> Turn point of MOVING block!
 
+#Globa variables, to keep track of the game state.
 blocks_min_max = [1,7]
 
 block_next = 0
@@ -63,8 +64,11 @@ text_size = 20
 text_size_title = 100
 speed_level = 1
 
-text_game_over_buttons = [button_enum.Button_Text.RESTART.value, button_enum.Button_Text.MENU.value, button_enum.Button_Text.EXIT.value]
-text_pause_buttons = [button_enum.Button_Text.RESUME.value, button_enum.Button_Text.MENU.value, button_enum.Button_Text.EXIT.value]
+#Die Menü Knöpfe für Start, Pause und Game Over Menü. Die Werte sind mit ein Enum gesetzt. Mit .value holt man den Wert des Enums, ist nötig für die Knopftexte!
+
+#The menu buttons for the start menu, pause menu and game over menu. The values are set via an enum. With .value you can get the values these enums contains (Necessary to display the text in this case!)
+text_game_over_buttons = [button_enum.Button_Text.RESTART, button_enum.Button_Text.MENU.value, button_enum.Button_Text.EXIT.value]
+text_pause_buttons = [button_enum.Button_Text.RESUME, button_enum.Button_Text.MENU.value, button_enum.Button_Text.EXIT.value]
 
 text_main_menu_buttons = [button_enum.Button_Text.START.value, button_enum.Button_Text.HIGHSCORE.value,
                           button_enum.Button_Text.OPTIONS.value, button_enum.Button_Text.EXIT.value]
@@ -100,6 +104,11 @@ j = 0
 width_center = (screen_width - width_walls_total)/2
 height_center = (screen_height - height_walls_total)/2
 
+#Wände und Knopf Liste. Es beinhaltet die Welt Koordinaten zum Rendern.
+#Ich habe nicht daran gedacht, die Wände und Blöcke NUR in ein grid so machen, also ist es geblieben.
+
+#Walls and Buttons list. It contains the world coordinates for rendering and such.
+#I first did not consider having the walls and blocks just in a grid, so it stuck around.
 walls = []
 buttons = []
 
@@ -118,6 +127,9 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 pygame.display.set_icon(resource.icon)
 
+#Konvertiert Fenster/Welt Koordinaten zu Grid Koordinaten
+
+#Converts the window/world cords to grid cords.
 def calculate_grid_cords(cord, is_x):
     global width_center, height_center, block_size
     if is_x:
@@ -125,6 +137,9 @@ def calculate_grid_cords(cord, is_x):
     else:
         return (int)((cord - height_center) / block_size)
 
+#Konvertiert Grid Koordinaten zu Fenster/Welt Koordinaten
+
+#Converts the grid cords to window/world cords.
 def calculate_world_cords(cord, is_x):
     global width_center, height_center, block_size
     if is_x:
@@ -135,6 +150,9 @@ def calculate_world_cords(cord, is_x):
 # x_w = cord * block_size + width_center
 # (x_w - width_center) / block_size = cord
 
+#Erstellt die Wände
+
+#creates the walls
 def create_walls():
     global walls, block_size, grid
 
@@ -164,6 +182,9 @@ def print_grid():
             print(grid[i][j],end=" ")
         print()
 
+#Definiert die Farbe und wie der Block aussieht wenn er reingespawnt wird. Es wird auf die Spieler liste übertragen am Ende.
+
+#Defines what colour and how the blocks look when spawned in. Assigns it to the player list too.
 def block_spawn(value, is_player_spawn):
     global walls, game_state
 
@@ -241,6 +262,9 @@ def block_spawn(value, is_player_spawn):
 
     return blocks
 
+#Bewegt die Blöcke runter
+
+#Move the blocks down the needed row
 def move_blocks_down(rows_removed, y_lowest):
     global grid, walls, columns, rows, block_size, sfx_play
 
@@ -329,6 +353,9 @@ def restart():
     points_faster_down = points_faster_down_og
     speed_level = 1
 
+#schaut ob links oder rechts etwas frei ist
+
+#checks wether there are free tiles left or right
 def x_away(list, check_right):
     x_extra = 1
 
@@ -358,6 +385,9 @@ def x_away(list, check_right):
                 break
     return x_extra
 
+#Spie Logik
+
+#Game logic
 def game_logic():
     global player_block, block_held_active, block_next, block_held_active, block_is_placed, block_held, block_current, timer_go_down, next_object, hold_object, game_state, sfx_play, points, speed_level, points_faster_down, points_faster_down_og, decrease, buffer_go_down, speed_level, screen
 
@@ -365,7 +395,7 @@ def game_logic():
         keyboard_helper.set_outside_variables(block_held_active, block_is_placed)
         placeSkip = keyboard_helper.player(pygame, player_block,
                                            walls, timer_conversion,
-                                           button_press_buffer, sfx_play, keyInput, screen)
+                                           button_press_buffer, sfx_play, keyInput)
 
         block_held_active = keyboard_helper.block_held
         block_is_placed = keyboard_helper.block_is_placed
@@ -519,6 +549,9 @@ def game_logic():
             new_x = next_object[i].x + (x_extra * next_object[i].width) + width_walls_total / 2
             next_object[i].x = new_x
 
+#Render Logik, es zeichnet die Knöpfe und sonstiges.
+
+#Render Logic, it draws the buttons and others
 def render_objects():
     global player_block, next_object, hold_object, walls, buttons, game_state, show_buttons, not_in_main_menu, screen_colour, text_size_title, text_title_colour, screen_width, screen_height, text_size, points
 
@@ -569,6 +602,9 @@ def render_objects():
             for i in range(len(buttons)):
                 renderer.render_button(buttons[i], pygame, screen)
 
+#Schaut welche Knopf Text die Knöpfe beinhaltet
+
+#Checks what button text the button contains
 def button_logic(mouse_object, button_up):
     global buttons
 
@@ -581,6 +617,9 @@ def button_logic(mouse_object, button_up):
 
         button_todo(text_of_button)
 
+#Ein "Listener", exekutiert die Knopf Funtkionen.
+
+#"Listener", executes the buttons functions
 def button_todo(text):
     global running, game_state, not_in_main_menu, sfx_play, text_options_buttons, started, music_play, points
 
@@ -638,6 +677,9 @@ def button_todo(text):
         resource.ui_button.stop()
         resource.ui_button.play()
 
+#Kontrolliert die sfx und Music an aus logik.
+
+#Controls the sfx and music on off logic
 def on_off_toggle(value1, value2, insert_into, play):
     global started, music_play, sfx_play, started
 
@@ -671,6 +713,9 @@ def on_off_toggle(value1, value2, insert_into, play):
                 started = False
                 music_play = music_toggle
 
+#Erstellt die Knöpfe per Text
+
+#Make the buttons per text
 def make_buttons(button_text):
     global buttons, screen_height, screen_width, button_height, button_width, button_colour, text_colour, text_size
 
@@ -700,6 +745,9 @@ def menu_toggle():
     elif game_state == menu_enum.Menu.HIGHSCORE.value:
         make_buttons(text_highscore_buttons)
 
+#Zeigt den Score, erster, zweiter und dritte.
+
+#Shows the scores, first, second and third.
 def show_scores():
     global text_title_colour, screen_colour, screen_width, button_height, screen_height
 

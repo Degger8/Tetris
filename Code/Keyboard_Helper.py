@@ -16,6 +16,9 @@ def set_outside_variables(block_heldN,block_is_placedN):
     block_held = block_heldN
     block_is_placed = block_is_placedN
 
+#Holt die X und Y, es erstellt eine kleines lokales grid für player_blocks.
+
+#gets the x or y, a small local grid for the player_blocks.
 def blocks_on_y_or_x(return_x,player_blocks):
     blocks_before = []
     x = 0
@@ -45,6 +48,9 @@ def blocks_on_y_or_x(return_x,player_blocks):
     else:
         return y
 
+#Holt das erste X oder Y, also das Kleinste.
+
+#gets the first x or y, so the smallest one
 def get_first_x_or_y(player_blocks,return_x):
     x_first = None
     y_first = None
@@ -66,6 +72,9 @@ def get_first_x_or_y(player_blocks,return_x):
     else:
         return y_first
 
+#Holt das letzte X oder Y, also das Größte.
+
+#gets the last x or y, so the biggest one
 def get_last_x_or_y(player_blocks, return_x):
     x_first = None
     y_first = None
@@ -87,6 +96,11 @@ def get_last_x_or_y(player_blocks, return_x):
     else:
         return y_first
 
+#Dies dreht den Block um seine Achse. Es holt erst die x und y vom jetzigen Block und wechselt die x und y Koordinaten.
+#Nachdem dies fertig ist, invertiert es die x Koordinaten. Wenn es keine Valide Position findet, kehrt es zur alten zurück.
+
+#This turns the blocks around. By first getting the x and y of the current block, then switching the x and y around.
+#After that is done, it inverts the x. If it fails to find a valid position, it returns to the old one.
 def turn_block(player_blocks,walls):
     not_valid = False
     old = deepcopy(player_blocks)
@@ -194,9 +208,12 @@ def turn_block(player_blocks,walls):
     if not_valid:
         player_blocks[:] = old
 
+#Dies akzeptiert und verwertet den Spieler input. Diese Methode kontrolliert die Bewegung, links und rechts, runter, wenn man es dreht oder hält.
+
+#This accepts and uses the keyboard inputs. This Method controls the movement (left, right and down), wether you can spin or hold the object.
 def player(pygame, player_blocks, walls, timer_conversion,
            button_press_buffer, sfx_play,
-           keyInput,screen):
+           keyInput):
     global timer, block_held, block_is_placed, block_fast_down, game_active, block_hold_already_hit
     placeSkip = False
     r_pressed = False
@@ -268,6 +285,9 @@ def player(pygame, player_blocks, walls, timer_conversion,
                     player_block_here = player_blocks[j]
                     y_start = player_block_here.y
 
+                    #Schaut welche die Höhste Y Position ist wenn es mit etwas aus der Wand Liste Kollidiert
+
+                    #checked what the highest y position is when it collides with something from the wall list.
                     while not collided:
                         y_og = player_block_here.y
                         y = y_og + player_block_here.height
@@ -289,6 +309,9 @@ def player(pygame, player_blocks, walls, timer_conversion,
                                 break
                     j = j - 1
 
+                #Dies berechnet wie weit nach unten die Blöcke zu fallen haben, und bewegt die Blöcke danach runter
+
+                #This now moves calculates how far the blocks has to fall and moves the blocks down
                 if y_farthest_up_start_y is not None:
                     try:
                         y_distance = y_farthest_up - y_farthest_up_start_y
@@ -317,6 +340,9 @@ def player(pygame, player_blocks, walls, timer_conversion,
                     resource.block_down_fast.stop()
                     resource.block_down_fast.play()
             else:
+                #Falls es mit Wändern kollidiert, schiebt es den Block direkt zurück.
+
+                #If it collides with a wall, it pushes the block directly back.
                 for i in range(len(walls)):
                     if colission_helper.AABB(player_block, walls[i]) and not collided:
                         for m in range(len(player_blocks)):

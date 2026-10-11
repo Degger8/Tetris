@@ -1,4 +1,11 @@
+#Die Basis Klasse des Spiels (für z.B. Wände). Es ist die Elternklasse von Button.py
+
+#The base class of the game. It is the parent class of Button.py
+
 class object:
+    #Dies ist ein Konstruktor, es wird benutzt um Variablen beim start des Objektes weiter zugeben.
+
+    #This is a constructor, it is used to pass over variables at the initalization off the object.
     def __init__(self, x, y, colour, block_size):
         self.x = x
         self.y = y

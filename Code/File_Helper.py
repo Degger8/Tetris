@@ -1,6 +1,10 @@
 import os
 import csv
 
+#Diese Klasse ladet, liest und modifiziert eine .csv Datei, um die Highscores zu speichern. Es funktioniert ähnlich zu Resource_Loader.py
+
+#This class loads, reads and modifies a .csv file, to safe highscores. It functions similar to Resource_Loader.py
+
 current_dir = os.path.dirname(__file__)
 directory_path_file = current_dir + "/../Resources/Highscores.csv"
 highscores = 3

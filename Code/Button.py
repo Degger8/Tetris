@@ -3,7 +3,13 @@ import pygame as pygame
 import time
 import Colission_Helper as collision_helper
 
+#Eine Kind Klasse, ist eine Klasse welche Variablen und Funktionen vererbt. Es existieren auch z.B. interfaces und mehr.
+
+#A child class, is a class which inherits the variables, aswell as the function of the parent class. There are also e.g. interfaces and more.
 class button_object(object.object):
+    #Dies ist ein Konstruktor, es wird benutzt um Variablen beim start des Objektes weiter zugeben.
+
+    #This is a constructor, it is used to pass over variables at the initalization off the object.
     def __init__(self, x, y, width, height, colour, text_colour, text, text_size):
         super().__init__(x,y,colour,None)
         self.width = width
@@ -39,7 +45,10 @@ class button_object(object.object):
         self.text_colour = text_colour
 
         self.hit = False
-        
+
+    #Ist der Knopf gedrückt worden und ist die Maus über den Knopf Objekt?
+
+    #Was the button pressed and is the mouse over this button instance?
     def press(self,object_mouse):
         if collision_helper.AABB(self,object_mouse) and self.last_pressed + self.wait < time.time() * self.time_to_millis:
             self.last_pressed = time.time() * self.time_to_millis
