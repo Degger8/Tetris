@@ -39,43 +39,10 @@ class button_object(object.object):
         self.text_colour = text_colour
 
         self.hit = False
-
-    def set_hit(self, value):
-        self.hit = value
-
-    def get_hit(self):
-        return self.hit
-
+        
     def press(self,object_mouse):
         if collision_helper.AABB(self,object_mouse) and self.last_pressed + self.wait < time.time() * self.time_to_millis:
             self.last_pressed = time.time() * self.time_to_millis
             return True
         else:
             return False
-
-    def get_x_text(self):
-        return self.x_text
-
-    def get_y_text(self):
-        return self.y_text
-
-    def get_text(self):
-        if not self.hit:
-            return self.text
-        else:
-            return self.text_dark
-
-    def get_text_rect(self):
-        if not self.hit:
-            return self.text_rect
-        else:
-            return self.text_rect_dark
-
-    def get_text_colour(self):
-        return self.text_colour
-
-    def get_colour_dark(self):
-        return self.colour_dark
-
-    def get_text_string(self):
-        return self.text_string

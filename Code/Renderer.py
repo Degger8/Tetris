@@ -1,17 +1,21 @@
 def render_object(object, pygame, screen):
-    rectangle = pygame.Rect(object.get_x(), object.get_y(), object.get_width(), object.get_height())
-    pygame.draw.rect(screen, object.get_colour(), rectangle)
+    rectangle = pygame.Rect(object.x, object.y, object.width, object.height)
+    pygame.draw.rect(screen, object.colour, rectangle)
 
 def render_button(object, pygame, screen):
-    colour = object.get_colour()
-    if object.get_hit():
-        colour = object.get_colour_dark()
+    colour = object.colour
+    if object.hit:
+        colour = object.colour_dark
 
-    rectangle = pygame.Rect(object.get_x(), object.get_y(), object.get_width(), object.get_height())
+    rectangle = pygame.Rect(object.x, object.y, object.width, object.height)
     pygame.draw.rect(screen, colour, rectangle)
 
-    rectangle_text = object.get_text_rect()
-    text = object.get_text()
+    rectangle_text = object.text_rect
+    text = object.text
+
+    if object.hit:
+        text = object.text_dark
+        rectangle_text = object.text_rect_dark
 
     screen.blit(text, rectangle_text)
 

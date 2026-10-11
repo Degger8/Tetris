@@ -261,8 +261,8 @@ def move_blocks_down(rows_removed, y_lowest):
                     y_new = y_move_down + y_world_cords_origin
 
                     for k in range(len(walls)):
-                        if walls[k].get_y() == y_world_cords_origin and walls[k].get_x() == x_world_cords_origin and walls[k].get_y() < y_lowest:
-                            walls[k].set_y(y_new)
+                        if walls[k].y == y_world_cords_origin and walls[k].x == x_world_cords_origin and walls[k].y < y_lowest:
+                            walls[k].y = y_new
                             
                             y_new_pos = calculate_grid_cords(y_new,False)
 
@@ -271,8 +271,8 @@ def move_blocks_down(rows_removed, y_lowest):
                             if y_new_pos >= len(grid):
                                 y_new_pos = len(grid) - 2
 
-                                y_new = y_new - walls[k].get_height() * 2
-                                walls[k].set_y(y_new)
+                                y_new = y_new - walls[k].height * 2
+                                walls[k].y = y_new
 
                             grid[y_new_pos][j] = 2
             j = j - 1
@@ -324,7 +324,7 @@ def restart():
     speed_level = 1
     block_is_placed = False
     game_state = menu_enum.Menu.GAME.value
-    keyboard_helper.set_game_active(True)
+    keyboard_helper.game_active = True
     buffer_go_down = buffer_go_down_og
     points_faster_down = points_faster_down_og
     speed_level = 1
@@ -337,15 +337,15 @@ def x_away(list, check_right):
         for j in range(len(list)):
             for k in range(len(walls)):
                 if not hit:
-                    x_now = list[i].get_x() + list[i].get_width() + width_walls_total / 2
+                    x_now = list[i].x + list[i].width + width_walls_total / 2
 
                     direction = 1
                     if check_right:
                         direction = -1
-                        x_now = list[i].get_x() - list[i].get_width() - width_walls_total / 2
+                        x_now = list[i].x - list[i].width - width_walls_total / 2
 
-                    test_object = game_object.object(x_now - list[j].get_width() * direction,
-                                                     list[j].get_y(), list[j].get_colour(), block_size)
+                    test_object = game_object.object(x_now - list[j].width * direction,
+                                                     list[j].y, list[j].colour, block_size)
 
                     hit = colission_helper.AABB(test_object, walls[k])
                     if hit:
@@ -367,11 +367,11 @@ def game_logic():
                                            walls, timer_conversion,
                                            button_press_buffer, sfx_play, keyInput, screen)
 
-        block_held_active = keyboard_helper.get_block_held()
-        block_is_placed = keyboard_helper.get_block_is_placed()
-        block_fast_down = keyboard_helper.get_block_fast_down()
+        block_held_active = keyboard_helper.block_held
+        block_is_placed = keyboard_helper.block_is_placed
+        block_fast_down = keyboard_helper.block_fast_down
 
-        if not keyboard_helper.get_game_active():
+        if not keyboard_helper.game_active:
             game_state = menu_enum.Menu.PAUSE.value
 
         if block_fast_down:
@@ -382,27 +382,27 @@ def game_logic():
             place = False
 
             for l in range(len(player_block)):
-                y = player_block[l].get_y()
+                y = player_block[l].y
                 y = y + block_size
-                player_block[l].set_y(y)
+                player_block[l].y = y
 
                 for i in range(len(walls)):
                     if colission_helper.AABB(player_block[l], walls[i]):
                         place = True
 
             if place:
-                keyboard_helper.set_block_hold_already_hit(False)
+                keyboard_helper.block_hold_already_hit = False
                 
                 for l in range(len(player_block)):
-                    y = player_block[l].get_y() - block_size
-                    player_block[l].set_y(y)
+                    y = player_block[l].y - block_size
+                    player_block[l].y = y
 
                 for l in range(len(player_block)):
                     walls.append(player_block[l])
                     block_is_placed = True
 
-                    x_array = calculate_grid_cords(player_block[l].get_x(), True)
-                    y_array = calculate_grid_cords(player_block[l].get_y(), False)
+                    x_array = calculate_grid_cords(player_block[l].x, True)
+                    y_array = calculate_grid_cords(player_block[l].y, False)
 
                     if x_array >= columns:
                         x_array = columns - 1
@@ -449,13 +449,13 @@ def game_logic():
                             y = calculate_world_cords(i, False)
 
                             for k in range(len(walls)):
-                                if walls[k].get_x() == x and walls[k].get_y() == y:
+                                if walls[k].x == x and walls[k].y == y:
                                     blocks.append(walls[k])
 
                 if row_done:
                     for j in range(len(blocks)):
-                        x_array = calculate_grid_cords(blocks[j].get_x(), True)
-                        y_array = calculate_grid_cords(blocks[j].get_y(), False)
+                        x_array = calculate_grid_cords(blocks[j].x, True)
+                        y_array = calculate_grid_cords(blocks[j].y, False)
 
                         grid[y_array][x_array] = 0
                         walls.remove(blocks[j])
@@ -483,8 +483,8 @@ def game_logic():
             hold_object = block_spawn(block_held, False)
 
             for i in range(len(hold_object)):
-                new_x = hold_object[i].get_x() - width_walls_total / 2
-                hold_object[i].set_x(new_x)
+                new_x = hold_object[i].x - width_walls_total / 2
+                hold_object[i].x = new_x
 
             collision = True
             while collision:
@@ -493,14 +493,14 @@ def game_logic():
                     for j in range(len(walls)):
                         if colission_helper.AABB(hold_object[i], walls[j]) and not collision:
                             for k in range(len(hold_object)):
-                                new_x = hold_object[k].get_x() - hold_object[k].get_width()
-                                hold_object[k].set_x(new_x)
+                                new_x = hold_object[k].x - hold_object[k].width
+                                hold_object[k].x = new_x
                             collision = True
 
             x_extra = x_away(hold_object, True)
             for k in range(len(hold_object)):
-                new_x = hold_object[k].get_x() - (hold_object[k].get_width() * x_extra)
-                hold_object[k].set_x(new_x)
+                new_x = hold_object[k].x - (hold_object[k].width * x_extra)
+                hold_object[k].x = new_x
         else:
             block_current = block_next
 
@@ -516,8 +516,8 @@ def game_logic():
         x_extra = x_away(next_object, False)
 
         for i in range(len(next_object)):
-            new_x = next_object[i].get_x() + (x_extra * next_object[i].get_width()) + width_walls_total / 2
-            next_object[i].set_x(new_x)
+            new_x = next_object[i].x + (x_extra * next_object[i].width) + width_walls_total / 2
+            next_object[i].x = new_x
 
 def render_objects():
     global player_block, next_object, hold_object, walls, buttons, game_state, show_buttons, not_in_main_menu, screen_colour, text_size_title, text_title_colour, screen_width, screen_height, text_size, points
@@ -525,9 +525,9 @@ def render_objects():
     if buttons is not None:
         for button in buttons:
             if colission_helper.AABB(button, mouse):
-                button.set_hit(True)
+                button.hit = True
             else:
-                button.set_hit(False)
+                button.hit = False
 
     renderer.clear_objects(pygame, screen, screen_colour)
     
@@ -577,7 +577,7 @@ def button_logic(mouse_object, button_up):
 
         for button in buttons:
             if button.press(mouse_object):
-                text_of_button = button.get_text_string()
+                text_of_button = button.text_string
 
         button_todo(text_of_button)
 
@@ -609,7 +609,7 @@ def button_todo(text):
     elif text == button_enum.Button_Text.RESUME.value:
         button_sfx_play = True
         game_state = menu_enum.Menu.GAME.value
-        keyboard_helper.set_game_active(True)
+        keyboard_helper.game_active = True
         not_in_main_menu = True
 
     elif text == button_enum.Button_Text.START.value:
@@ -620,6 +620,7 @@ def button_todo(text):
 
     elif text == button_enum.Button_Text.HIGHSCORE.value:
         game_state = menu_enum.Menu.HIGHSCORE.value
+        button_sfx_play = True
 
     elif text == button_enum.Button_Text.OPTIONS.value:
         button_sfx_play = True
@@ -728,8 +729,8 @@ while running:
 
     keyInput = pygame.key.get_pressed()
     mouse_pos = pygame.mouse.get_pos()
-    mouse.set_x(mouse_pos[0])
-    mouse.set_y(mouse_pos[1])
+    mouse.x = mouse_pos[0]
+    mouse.y = mouse_pos[1]
 
     if game_state == menu_enum.Menu.GAME.value:
         show_buttons = False

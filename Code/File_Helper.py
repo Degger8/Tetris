@@ -68,5 +68,3 @@ def set_score(score):
 
         file_content[index] = score
         write_replace(file_content)
-
-set_score(0)

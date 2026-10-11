@@ -1,7 +1,7 @@
 def AABB(object1, object2):
-    xOne = object1.get_x() + object1.get_width() > object2.get_x()
-    xTwo = object2.get_x() + object2.get_width() > object1.get_x()
-    yOne = object1.get_y() + object1.get_height() > object2.get_y()
-    yTwo = object2.get_y() + object2.get_height() > object1.get_y()
+    xOne = object1.x + object1.width > object2.x
+    xTwo = object2.x + object2.width > object1.x
+    yOne = object1.y + object1.height > object2.y
+    yTwo = object2.y + object2.height > object1.y
 
     return xOne and xTwo and yOne and yTwo

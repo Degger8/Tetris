@@ -2,7 +2,6 @@ import time
 import Colission_Helper as colission_helper
 import Resource_Loader as resource
 import Game_Object as object
-import Renderer as renderer
 from copy import deepcopy
 
 timer = 0
@@ -11,30 +10,6 @@ block_is_placed = False
 block_fast_down = False
 block_hold_already_hit = False
 game_active = True
-
-def get_game_active():
-    global game_active
-    return game_active
-
-def set_game_active(value):
-    global game_active
-    game_active = value
-
-def set_block_hold_already_hit(value):
-    global block_hold_already_hit
-    block_hold_already_hit = value
-
-def get_block_held():
-    global block_held
-    return block_held
-
-def get_block_is_placed():
-    global block_is_placed
-    return block_is_placed
-
-def get_block_fast_down():
-    global block_fast_down
-    return block_fast_down
 
 def set_outside_variables(block_heldN,block_is_placedN):
     global block_held, block_is_placed
@@ -53,9 +28,9 @@ def blocks_on_y_or_x(return_x,player_blocks):
 
         for j in range(len(blocks_before)):
             block_before = blocks_before[j]
-            if player_block.get_x() == block_before.get_x():
+            if player_block.x == block_before.x:
                 add_x = False
-            if player_block.get_y() == block_before.get_y():
+            if player_block.y == block_before.y:
                 add_y = False
 
         if add_x:
@@ -77,14 +52,14 @@ def get_first_x_or_y(player_blocks,return_x):
     for i in range(len(player_blocks)):
         player_block = player_blocks[i]
         if x_first is not None and y_first is not None:
-            if x_first > player_block.get_x():
-                x_first = player_block.get_x()
+            if x_first > player_block.x:
+                x_first = player_block.x
 
-            if y_first > player_block.get_y():
-                y_first = player_block.get_y()
+            if y_first > player_block.y:
+                y_first = player_block.y
         else:
-            x_first = player_block.get_x()
-            y_first = player_block.get_y()
+            x_first = player_block.x
+            y_first = player_block.y
 
     if return_x:
         return x_first
@@ -98,14 +73,14 @@ def get_last_x_or_y(player_blocks, return_x):
     for i in range(len(player_blocks)):
         player_block = player_blocks[i]
         if x_first is not None and y_first is not None:
-            if x_first < player_block.get_x():
-                x_first = player_block.get_x()
+            if x_first < player_block.x:
+                x_first = player_block.x
 
-            if y_first < player_block.get_y():
-                y_first = player_block.get_y()
+            if y_first < player_block.y:
+                y_first = player_block.y
         else:
-            x_first = player_block.get_x()
-            y_first = player_block.get_y()
+            x_first = player_block.x
+            y_first = player_block.y
 
     if return_x:
         return x_first
@@ -128,8 +103,8 @@ def turn_block(player_blocks,walls):
     for i in range(len(player_blocks)):
         player_block = player_blocks[i]
 
-        width = player_block.get_width()
-        height = player_block.get_height()
+        width = player_block.width
+        height = player_block.height
         break
 
     if width and height is not None:
@@ -143,12 +118,12 @@ def turn_block(player_blocks,walls):
             y_now = y_first
 
             for j in range(blocks_total):
-                if x_now != player_block.get_x():
-                    x_now = x_now + player_block.get_width()
+                if x_now != player_block.x:
+                    x_now = x_now + player_block.width
                     x_to_cord = x_to_cord + 1
 
-                if y_now != player_block.get_y():
-                    y_now = y_now + player_block.get_height()
+                if y_now != player_block.y:
+                    y_now = y_now + player_block.height
                     y_to_cord = y_to_cord + 1
 
             x_inverse = y_to_cord - blocks_total
@@ -157,14 +132,14 @@ def turn_block(player_blocks,walls):
             if x_inverse < 0:
                 x_inverse *= -1
 
-            y_pos = y_inverse * player_block.get_height() + y_first
-            x_pos = x_inverse * player_block.get_width() + x_first
+            y_pos = y_inverse * player_block.height + y_first
+            x_pos = x_inverse * player_block.width + x_first
 
-            move_back = y_length_before * player_block.get_width()
+            move_back = y_length_before * player_block.width
             x_pos = x_pos - move_back
 
-            player_block.set_y(y_pos)
-            player_block.set_x(x_pos)
+            player_block.y = y_pos
+            player_block.x = x_pos
 
         collision = True
         timer = time.time()
@@ -180,21 +155,21 @@ def turn_block(player_blocks,walls):
 
                         direction = 1
 
-                        if x_first < wall.get_x():
+                        if x_first < wall.x:
                             direction = -1
 
                         is_free_x = True
                         for k in range(len(player_blocks)):
                             player_block = player_blocks[k]
 
-                            object_direction_free = object.object(player_block.get_x(),player_block.get_y(),None,None)
+                            object_direction_free = object.object(player_block.x,player_block.y,None,None)
 
-                            object_direction_free.set_width(player_block.get_width())
-                            object_direction_free.set_height(player_block.get_height())
+                            object_direction_free.width = player_block.width
+                            object_direction_free.height = player_block.height
 
                             for t in range(len(player_blocks)):
-                                x_new = object_direction_free.get_x() + player_block.get_width() * direction
-                                object_direction_free.set_x(x_new)
+                                x_new = object_direction_free.x + player_block.width * direction
+                                object_direction_free.x = x_new
 
                             for l in range(len(walls)):
                                 if colission_helper.AABB(object_direction_free,walls[l]):
@@ -203,11 +178,11 @@ def turn_block(player_blocks,walls):
                         for k in range(len(player_blocks)):
                             new = player_blocks[k]
                             if is_free_x:
-                                x_new = new.get_x() + new.get_width() * direction
-                                new.set_x(x_new)
+                                x_new = new.x + new.width * direction
+                                new.x = x_new
                             else:
-                                y_new = new.get_y() - new.get_height()
-                                new.set_y(y_new)
+                                y_new = new.y - new.height
+                                new.y = y_new
 
             if timer + time_not_valid < time.time():
                 collision = False
@@ -241,11 +216,11 @@ def player(pygame, player_blocks, walls, timer_conversion,
         for l in range(len(player_blocks)):
             player_block = player_blocks[l]
 
-            width = player_block.get_width()
-            height = player_block.get_height()
-            x = player_block.get_x()
+            width = player_block.width
+            height = player_block.height
+            x = player_block.x
             x_og = x
-            y = player_block.get_y()
+            y = player_block.y
 
             if keyInput[pygame.K_d]:
                 key_pressed = True
@@ -274,15 +249,15 @@ def player(pygame, player_blocks, walls, timer_conversion,
                 game_active = False
                 key_pressed = True
 
-            player_block.set_x(x)
-            player_block.set_y(y)
+            player_block.x = x
+            player_block.y = y
 
             collided = False
             if space_pressed:
                 placeSkip = True
                 block_is_placed = True
                 block_fast_down = True
-                player_block.set_x(x_og)
+                player_block.x = x_og
 
                 j = len(player_blocks) - 1
                 y_farthest_up = None
@@ -291,12 +266,12 @@ def player(pygame, player_blocks, walls, timer_conversion,
                 while j >= 0:
                     collided = False
                     player_block_here = player_blocks[j]
-                    y_start = player_block_here.get_y()
+                    y_start = player_block_here.y
 
                     while not collided:
-                        y_og = player_block_here.get_y()
-                        y = y_og + player_block_here.get_height()
-                        player_block_here.set_y(y)
+                        y_og = player_block_here.y
+                        y = y_og + player_block_here.height
+                        player_block_here.y = y
                         for i in range(len(walls)):
                             if colission_helper.AABB(player_block_here, walls[i]) and not collided:
                                 collided = True
@@ -308,7 +283,7 @@ def player(pygame, player_blocks, walls, timer_conversion,
                                     y_farthest_up_start_y = y_start
                                     y_farthest_up = y_og
                                 
-                                player_block_here.set_y(y_start)
+                                player_block_here.y = y_start
 
                             if collided:
                                 break
@@ -319,8 +294,8 @@ def player(pygame, player_blocks, walls, timer_conversion,
                         y_distance = y_farthest_up - y_farthest_up_start_y
 
                         for l in range(len(player_blocks)):
-                            y_fall = player_blocks[l].get_y() + y_distance
-                            player_blocks[l].set_y(y_fall)
+                            y_fall = player_blocks[l].y + y_distance
+                            player_blocks[l].y = y_fall
 
                         collision = True
 
@@ -331,8 +306,8 @@ def player(pygame, player_blocks, walls, timer_conversion,
                                     while colission_helper.AABB(player_blocks[l],walls[i]):
                                         collision = True
                                         for m in range(len(player_blocks)):
-                                            y_move_out = player_blocks[m].get_y() - player_blocks[m].get_height()
-                                            player_blocks[m].set_y(y_move_out)
+                                            y_move_out = player_blocks[m].y - player_blocks[m].height
+                                            player_blocks[m].y = y_move_out
                     except KeyError as e:
                         print("an error occured!",e)
                 else:
@@ -345,8 +320,8 @@ def player(pygame, player_blocks, walls, timer_conversion,
                 for i in range(len(walls)):
                     if colission_helper.AABB(player_block, walls[i]) and not collided:
                         for m in range(len(player_blocks)):
-                            player_blocks[m].set_x(x_originals[m])
-                            player_blocks[m].set_y(y_originals[m])
+                            player_blocks[m].x = x_originals[m]
+                            player_blocks[m].y = y_originals[m]
                             collided = True
 
             if collided:
