@@ -36,6 +36,9 @@ block_next = 0
 block_current = 0
 block_held = 0
 
+#Kontrolliert die Blockgröße. Wenn die Höhe oder Länge außerhalb dieser Variable geändert werden, bricht die Spiellogik.
+
+#Controls the block sizes. If the widht or height is messed with, it breaks the game.
 block_size = 25
 
 rows = 20
