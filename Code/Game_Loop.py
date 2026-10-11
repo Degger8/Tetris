@@ -11,8 +11,10 @@ import Button as button
 import Button_Enums as button_enum
 import Menu_Enums as menu_enum
 import File_Helper as file_helper
+import Global_Variables as globals
+from copy import deepcopy
 
-#TODO: Add a Constants class + Window resizing.
+#TODO: Add Window resizing.
 
 # Blocks next/hold:
 # 1 -> I shape (long)
@@ -29,49 +31,11 @@ import File_Helper as file_helper
 # 3 -> Player block
 # 4 -> Turn point of MOVING block!
 
-#Globa variables, to keep track of the game state.
-blocks_min_max = [1,7]
-
-block_next = 0
-block_current = 0
-block_held = 0
-
-#Kontrolliert die Blockgröße. Wenn die Höhe oder Länge außerhalb dieser Variable geändert werden, bricht die Spiellogik.
-
-#Controls the block sizes. If the widht or height is messed with, it breaks the game.
-block_size = 25
-
-rows = 20
-columns = 15
-
-if columns % 2 != 0:
-    columns = columns - 1
-
-extra_width = 600
-extra_height = 250
-
-button_press_buffer = 100
-timer_conversion = 1000
-timer_go_down = 0
-buffer_go_down = 750
-buffer_go_down_og = buffer_go_down
-decrease = 100
-
-button_height = 80
-button_width = 200
-button_colour = [255,255,255]
-text_title_colour = [255,255,255]
-text_colour = [0,0,0]
-screen_colour = [0,0,0]
-text_size = 20
-text_size_title = 100
-speed_level = 1
-
 #Die Menü Knöpfe für Start, Pause und Game Over Menü. Die Werte sind mit ein Enum gesetzt. Mit .value holt man den Wert des Enums, ist nötig für die Knopftexte!
 
 #The menu buttons for the start menu, pause menu and game over menu. The values are set via an enum. With .value you can get the values these enums contains (Necessary to display the text in this case!)
-text_game_over_buttons = [button_enum.Button_Text.RESTART, button_enum.Button_Text.MENU.value, button_enum.Button_Text.EXIT.value]
-text_pause_buttons = [button_enum.Button_Text.RESUME, button_enum.Button_Text.MENU.value, button_enum.Button_Text.EXIT.value]
+text_game_over_buttons = [button_enum.Button_Text.RESTART.value, button_enum.Button_Text.MENU.value, button_enum.Button_Text.EXIT.value]
+text_pause_buttons = [button_enum.Button_Text.RESUME.value, button_enum.Button_Text.MENU.value, button_enum.Button_Text.EXIT.value]
 
 text_main_menu_buttons = [button_enum.Button_Text.START.value, button_enum.Button_Text.HIGHSCORE.value,
                           button_enum.Button_Text.OPTIONS.value, button_enum.Button_Text.EXIT.value]
@@ -79,28 +43,17 @@ text_main_menu_buttons = [button_enum.Button_Text.START.value, button_enum.Butto
 text_options_buttons = [button_enum.Button_Text.MUSIC_ON.value, button_enum.Button_Text.SFX_ON.value, button_enum.Button_Text.MENU.value]
 text_highscore_buttons = [button_enum.Button_Text.MENU.value]
 
-points = 0
-points_faster_down = 2500
-points_faster_down_og = points_faster_down
+width = globals.columns * globals.block_size
+height = globals.columns * globals.block_size
 
-not_in_main_menu = False
-block_is_placed = False
-started = False
-
-music_play = True
-sfx_play = True
-
-width = columns * block_size
-height = columns * block_size
-show_buttons = False
 game_state = menu_enum.Menu.MAINMENU.value
 
-screen_width = width + extra_width
-screen_height = height + extra_height
+screen_width = width + globals.extra_width
+screen_height = height + globals.extra_height
 
-width_walls_total = block_size * columns
-height_walls_total = block_size * rows
-grid = numpy.zeros((rows,columns))
+width_walls_total = globals.block_size * globals.columns
+height_walls_total = globals.block_size * globals.rows
+grid = numpy.zeros((globals.rows,globals.columns))
 i = 0
 j = 0
 
@@ -122,7 +75,7 @@ player_block = None
 block_held_active = False
 next_object = None
 hold_object = None
-block_next = random.randint(blocks_min_max[0],blocks_min_max[1])
+globals.block_next = random.randint(globals.blocks_min_max[0],globals.blocks_min_max[1])
 
 pygame.init()
 pygame.display.set_caption("Tetris")
@@ -134,21 +87,21 @@ pygame.display.set_icon(resource.icon)
 
 #Converts the window/world cords to grid cords.
 def calculate_grid_cords(cord, is_x):
-    global width_center, height_center, block_size
+    global width_center, height_center
     if is_x:
-        return (int)((cord - width_center) / block_size)
+        return (int)((cord - width_center) / globals.block_size)
     else:
-        return (int)((cord - height_center) / block_size)
+        return (int)((cord - height_center) / globals.block_size)
 
 #Konvertiert Grid Koordinaten zu Fenster/Welt Koordinaten
 
 #Converts the grid cords to window/world cords.
 def calculate_world_cords(cord, is_x):
-    global width_center, height_center, block_size
+    global width_center, height_center
     if is_x:
-        return cord * block_size + width_center
+        return cord * globals.block_size + width_center
     else:
-        return cord * block_size + height_center
+        return cord * globals.block_size + height_center
 
 # x_w = cord * block_size + width_center
 # (x_w - width_center) / block_size = cord
@@ -157,30 +110,30 @@ def calculate_world_cords(cord, is_x):
 
 #creates the walls
 def create_walls():
-    global walls, block_size, grid
+    global walls, grid
 
-    for i in range(rows):
-        for j in range(columns):
+    for i in range(globals.rows):
+        for j in range(globals.columns):
             grid[i][j] = 0
     
     walls.clear()
-    for i in range(rows):
-        for j in range(columns):
-            if j - 1 < 0 or j + 1 >= columns or i + 1 >= rows:
+    for i in range(globals.rows):
+        for j in range(globals.columns):
+            if j - 1 < 0 or j + 1 >= globals.columns or i + 1 >= globals.rows:
                 x = calculate_world_cords(j,True)
                 y = calculate_world_cords(i,False)
 
                 grey_scale = 100
                 wall_colour = [grey_scale,grey_scale,grey_scale]
 
-                object = game_object.object(x,y,wall_colour,block_size)
+                object = game_object.object(x,y,wall_colour,globals.block_size)
                 walls.append(object)
 
                 grid[i][j] = 1
 
 def print_grid():
-    global columns, rows
-    for i in range(rows):
+    global columns
+    for i in range(globals.rows):
         for j in range(columns):
             print(grid[i][j],end=" ")
         print()
@@ -193,8 +146,10 @@ def block_spawn(value, is_player_spawn):
 
     blocks = []
 
+    block_size = globals.block_size
+
     y = height_center
-    x = (columns/2) * block_size + width_center
+    x = (globals.columns/2) * block_size + width_center
 
     if value == 1:
         colour = [0,255,255]
@@ -269,19 +224,21 @@ def block_spawn(value, is_player_spawn):
 
 #Move the blocks down the needed row
 def move_blocks_down(rows_removed, y_lowest):
-    global grid, walls, columns, rows, block_size, sfx_play
+    global grid, walls
 
-    if sfx_play:
+    if globals.sfx_play:
         resource.row_cleared.stop()
         resource.row_cleared.play()
 
-    y_move_down = rows_removed * block_size
+    y_move_down = rows_removed * globals.block_size
 
-    i = rows - 1
+    columns = globals.columns
+
+    i = globals.rows - 1
     while i >= 0:
         j = columns - 1
         while j >= 0:
-            if j > 0 and j + 1 < columns and i + 1 < rows:
+            if j > 0 and j + 1 < columns and i + 1 < globals.rows:
                 if grid[i][j] == 2:
                     x_world_cords_origin = calculate_world_cords(j,True)
                     y_world_cords_origin = calculate_world_cords(i,False)
@@ -301,19 +258,27 @@ def move_blocks_down(rows_removed, y_lowest):
                                 y_new = y_new - walls[k].height * 2
                                 walls[k].y = y_new
 
+                            for check in range(len(walls)):
+                                wall_check = walls[check]
+                                if colission_helper.AABB(wall_check,walls[k]) and wall_check is not walls[k]:
+                                    y_new_pos = len(grid) - 2
+
+                                    y_new = y_new - walls[k].height * 2
+                                    walls[k].y = y_new
+
                             grid[y_new_pos][j] = 2
             j = j - 1
 
         i = i - 1
 
 def rows_done_count():
-    global grid, columns, rows
+    global grid
 
     total_rows = 0
-    for i in range(rows):
+    for i in range(globals.rows):
         row_done = True
-        for j in range(columns):
-            if j > 0 and j + 1 < columns: 
+        for j in range(globals.columns):
+            if j > 0 and j + 1 < globals.columns: 
                 if grid[i][j] == 0 or grid[i][j] == 1:
                     row_done = False
         if row_done:
@@ -322,13 +287,13 @@ def rows_done_count():
     return total_rows
 
 def lowest_done_row():
-    global grid, columns, rows
+    global grid
 
     lowest_y = 0
-    for i in range(rows):
+    for i in range(globals.rows):
         row_done = True
-        for j in range(columns):
-            if j > 0 and j + 1 < columns: 
+        for j in range(globals.columns):
+            if j > 0 and j + 1 < globals.columns: 
                 if grid[i][j] == 0 or grid[i][j] == 1:
                     row_done = False
         if row_done:
@@ -339,22 +304,22 @@ def lowest_done_row():
     return return_y
 
 def restart():
-    global player_block, block_held, block_next, block_held_active, next_object, hold_object, block_is_placed, game_state, points, speed_level, buffer_go_down, buffer_go_down_og, points_faster_down, points_faster_down_og, speed_level
+    global player_block, block_held_active, next_object, hold_object, game_state
     create_walls()
     player_block = None
-    block_held = 0
-    block_next = random.randint(blocks_min_max[0],blocks_min_max[1])
+    globals.block_held = 0
+    globals.block_next = random.randint(globals.blocks_min_max[0],globals.blocks_min_max[1])
     block_held_active = False
     next_object = None
     hold_object = None
-    points = 0
-    speed_level = 1
-    block_is_placed = False
+    globals.points = 0
+    globals.speed_level = 1
+    globals.block_is_placed = False
     game_state = menu_enum.Menu.GAME.value
     keyboard_helper.game_active = True
-    buffer_go_down = buffer_go_down_og
-    points_faster_down = points_faster_down_og
-    speed_level = 1
+    globals.buffer_go_down = globals.buffer_go_down_og
+    globals.points_faster_down = globals.points_faster_down_og
+    globals.speed_level = 1
 
 #schaut ob links oder rechts etwas frei ist
 
@@ -375,7 +340,7 @@ def x_away(list, check_right):
                         x_now = list[i].x - list[i].width - width_walls_total / 2
 
                     test_object = game_object.object(x_now - list[j].width * direction,
-                                                     list[j].y, list[j].colour, block_size)
+                                                     list[j].y, list[j].colour, globals.block_size)
 
                     hit = colission_helper.AABB(test_object, walls[k])
                     if hit:
@@ -392,31 +357,31 @@ def x_away(list, check_right):
 
 #Game logic
 def game_logic():
-    global player_block, block_held_active, block_next, block_held_active, block_is_placed, block_held, block_current, timer_go_down, next_object, hold_object, game_state, sfx_play, points, speed_level, points_faster_down, points_faster_down_og, decrease, buffer_go_down, speed_level, screen
+    global player_block, block_held_active, next_object, hold_object, game_state, screen
 
     if player_block is not None:
-        keyboard_helper.set_outside_variables(block_held_active, block_is_placed)
+        keyboard_helper.set_outside_variables(block_held_active, globals.block_is_placed)
         placeSkip = keyboard_helper.player(pygame, player_block,
-                                           walls, timer_conversion,
-                                           button_press_buffer, sfx_play, keyInput)
+                                           walls, globals.timer_conversion,
+                                           globals.button_press_buffer, globals.sfx_play, keyInput)
 
         block_held_active = keyboard_helper.block_held
-        block_is_placed = keyboard_helper.block_is_placed
+        globals.block_is_placed = keyboard_helper.block_is_placed
         block_fast_down = keyboard_helper.block_fast_down
 
         if not keyboard_helper.game_active:
             game_state = menu_enum.Menu.PAUSE.value
 
         if block_fast_down:
-            timer_go_down = time.time() * timer_conversion
+            globals.timer_go_down = time.time() * globals.timer_conversion
 
-        if timer_go_down + buffer_go_down < time.time() * timer_conversion or placeSkip:
-            timer_go_down = time.time() * timer_conversion
+        if globals.timer_go_down + globals.buffer_go_down < time.time() * globals.timer_conversion or placeSkip:
+            globals.timer_go_down = time.time() * globals.timer_conversion
             place = False
 
             for l in range(len(player_block)):
                 y = player_block[l].y
-                y = y + block_size
+                y = y + globals.block_size
                 player_block[l].y = y
 
                 for i in range(len(walls)):
@@ -427,23 +392,23 @@ def game_logic():
                 keyboard_helper.block_hold_already_hit = False
                 
                 for l in range(len(player_block)):
-                    y = player_block[l].y - block_size
+                    y = player_block[l].y - globals.block_size
                     player_block[l].y = y
 
                 for l in range(len(player_block)):
                     walls.append(player_block[l])
-                    block_is_placed = True
+                    globals.block_is_placed = True
 
                     x_array = calculate_grid_cords(player_block[l].x, True)
                     y_array = calculate_grid_cords(player_block[l].y, False)
 
-                    if x_array >= columns:
-                        x_array = columns - 1
+                    if x_array >= globals.columns:
+                        x_array = globals.columns - 1
                     elif x_array < 0:
                         x_array = 0
 
-                    if y_array >= rows:
-                        y_array = rows - 1
+                    if y_array >= globals.rows:
+                        y_array = globals.rows - 1
                     elif y_array < 0:
                         y_array = 0
 
@@ -452,29 +417,29 @@ def game_logic():
             rows_removed = rows_done_count()
 
             if rows_removed == 1:
-                points = points + (100 * speed_level)
+                globals.points = globals.points + (100 * globals.speed_level)
             if rows_removed == 2:
-                points = points + (300 * speed_level)
+                globals.points = globals.points + (300 * globals.speed_level)
             if rows_removed == 3:
-                points = points + (500 * speed_level)
+                globals.points = globals.points + (500 * globals.speed_level)
             if rows_removed == 4:
-                points = points + (800 * speed_level)
+                globals.points = globals.points + (800 * globals.speed_level)
 
-            if points > points_faster_down:
-                points_faster_down = points_faster_down + points_faster_down_og
-                buffer_go_down = buffer_go_down - decrease
-                speed_level = speed_level + 1
-                if buffer_go_down < 0:
-                    buffer_go_down = decrease
+            if globals.points > globals.points_faster_down:
+                globals.points_faster_down = globals.points_faster_down + globals.points_faster_down_og
+                globals.buffer_go_down = globals.buffer_go_down - globals.decrease
+                globals.speed_level = globals.speed_level + 1
+                if globals.buffer_go_down < 0:
+                    globals.buffer_go_down = globals.decrease
 
             y_lowest = lowest_done_row()
             rows_move_down = False
-            for i in range(rows):
+            for i in range(globals.rows):
                 row_done = True
                 blocks = []
 
-                for j in range(columns):
-                    if j > 0 and j + 1 < columns:
+                for j in range(globals.columns):
+                    if j > 0 and j + 1 < globals.columns:
                         if grid[i][j] == 0 or grid[i][j] == 1:
                             row_done = False
                         else:
@@ -500,20 +465,20 @@ def game_logic():
             if rows_move_down:
                 move_blocks_down(rows_removed, y_lowest)
 
-    if block_is_placed or player_block is None or block_held_active:
-        block_is_placed = False
+    if globals.block_is_placed or player_block is None or block_held_active:
+        globals.block_is_placed = False
 
-        block_drop_in = block_next
+        block_drop_in = globals.block_next
         if block_held_active:
-            if block_held != 0:
-                block_drop_in = block_held
-            block_held_storage = block_held
+            if globals.block_held != 0:
+                block_drop_in = globals.block_held
+            block_held_storage = globals.block_held
 
-            block_held = block_current
+            globals.block_held = globals.block_current
 
-            block_current = block_held_storage
+            globals.block_current = block_held_storage
 
-            hold_object = block_spawn(block_held, False)
+            hold_object = block_spawn(globals.block_held, False)
 
             for i in range(len(hold_object)):
                 new_x = hold_object[i].x - width_walls_total / 2
@@ -535,16 +500,16 @@ def game_logic():
                 new_x = hold_object[k].x - (hold_object[k].width * x_extra)
                 hold_object[k].x = new_x
         else:
-            block_current = block_next
+            globals.block_current = globals.block_next
 
         player_block = block_spawn(block_drop_in, True)
 
         if block_held_active:
             block_held_active = False
         else:
-            block_next = random.randint(blocks_min_max[0], blocks_min_max[1])
+            globals.block_next = random.randint(globals.blocks_min_max[0], globals.blocks_min_max[1])
 
-        next_object = block_spawn(block_next, False)
+        next_object = block_spawn(globals.block_next, False)
 
         x_extra = x_away(next_object, False)
 
@@ -556,7 +521,7 @@ def game_logic():
 
 #Render Logic, it draws the buttons and others
 def render_objects():
-    global player_block, next_object, hold_object, walls, buttons, game_state, show_buttons, not_in_main_menu, screen_colour, text_size_title, text_title_colour, screen_width, screen_height, text_size, points
+    global player_block, next_object, hold_object, walls, buttons, game_state, screen_width, screen_height
 
     if buttons is not None:
         for button in buttons:
@@ -565,9 +530,9 @@ def render_objects():
             else:
                 button.hit = False
 
-    renderer.clear_objects(pygame, screen, screen_colour)
+    renderer.clear_objects(pygame, screen, globals.screen_colour)
     
-    if not_in_main_menu:
+    if globals.not_in_main_menu:
         if walls is not None:
             for i in range(len(walls)):
                 renderer.render_object(walls[i], pygame, screen)
@@ -585,22 +550,22 @@ def render_objects():
                 renderer.render_object(hold_object[i], pygame, screen)
 
     x = screen_width/2
-    y = 50 + text_size_title/2
+    y = 50 + globals.text_size_title/2
     
-    y_score = screen_height - text_size - 5
+    y_score = screen_height - globals.text_size - 5
 
     if game_state == menu_enum.Menu.MAINMENU.value or game_state == menu_enum.Menu.OPTIONS.value or game_state == menu_enum.Menu.HIGHSCORE.value:
-        renderer.render_text(pygame,screen,"Tetris",text_size_title,text_title_colour,screen_colour,y,x)
+        renderer.render_text(pygame,screen,"Tetris",globals.text_size_title,globals.text_title_colour,globals.screen_colour,y,x)
     elif game_state == menu_enum.Menu.GAME_OVER.value:
-        renderer.render_text(pygame,screen,"Game Over!",text_size_title,text_title_colour,screen_colour,y,x)
+        renderer.render_text(pygame,screen,"Game Over!",globals.text_size_title,globals.text_title_colour,globals.screen_colour,y,x)
     elif game_state == menu_enum.Menu.GAME.value:
-        text = "Points: "+str(points)
-        renderer.render_text(pygame,screen,str(text),text_size,text_title_colour,screen_colour,y_score,x)
+        text = "Points: "+str(globals.points)
+        renderer.render_text(pygame,screen,str(text),globals.text_size,globals.text_title_colour,globals.screen_colour,y_score,x)
 
     if game_state == menu_enum.Menu.HIGHSCORE.value:
         show_scores()
 
-    if show_buttons:
+    if globals.show_buttons:
         if buttons is not None:
             for i in range(len(buttons)):
                 renderer.render_button(buttons[i], pygame, screen)
@@ -624,27 +589,27 @@ def button_logic(mouse_object, button_up):
 
 #"Listener", executes the buttons functions
 def button_todo(text):
-    global running, game_state, not_in_main_menu, sfx_play, text_options_buttons, started, music_play, points
+    global running, game_state, text_options_buttons
 
     button_sfx_play = False
     if text == button_enum.Button_Text.RESTART.value:
-        file_helper.set_score(points)
+        file_helper.set_score(globals.points)
 
         button_sfx_play = True
         restart()
-        not_in_main_menu = True
+        globals.not_in_main_menu = True
 
     elif text == button_enum.Button_Text.EXIT.value:
         button_sfx_play = True
         running = False
 
     elif text == button_enum.Button_Text.MENU.value:
-        file_helper.set_score(points)
+        file_helper.set_score(globals.points)
 
         button_sfx_play = True
-        not_in_main_menu = False
+        globals.not_in_main_menu = False
         if game_state == menu_enum.Menu.PAUSE.value or game_state == menu_enum.Menu.GAME_OVER.value:
-            started = False
+            globals.started = False
         restart()
         game_state = menu_enum.Menu.MAINMENU.value
 
@@ -652,13 +617,13 @@ def button_todo(text):
         button_sfx_play = True
         game_state = menu_enum.Menu.GAME.value
         keyboard_helper.game_active = True
-        not_in_main_menu = True
+        globals.not_in_main_menu = True
 
     elif text == button_enum.Button_Text.START.value:
         button_sfx_play = True
         game_state = menu_enum.Menu.GAME.value
-        not_in_main_menu = True
-        started = False
+        globals.not_in_main_menu = True
+        globals.started = False
 
     elif text == button_enum.Button_Text.HIGHSCORE.value:
         game_state = menu_enum.Menu.HIGHSCORE.value
@@ -676,7 +641,7 @@ def button_todo(text):
         button_sfx_play = True
         on_off_toggle(button_enum.Button_Text.MUSIC_ON.value,button_enum.Button_Text.MUSIC_OFF.value,text_options_buttons, "Music")
 
-    if button_sfx_play and sfx_play:
+    if button_sfx_play and globals.sfx_play:
         resource.ui_button.stop()
         resource.ui_button.play()
 
@@ -684,14 +649,12 @@ def button_todo(text):
 
 #Controls the sfx and music on off logic
 def on_off_toggle(value1, value2, insert_into, play):
-    global started, music_play, sfx_play, started
-
     music_toggle = None
 
     if play == "Sfx":
-        music_toggle = sfx_play
+        music_toggle = globals.sfx_play
     elif play == "Music":
-        music_toggle = music_play
+        music_toggle = globals.music_play
 
     pos = None
 
@@ -711,28 +674,28 @@ def on_off_toggle(value1, value2, insert_into, play):
             insert_into[pos] = text_insert
 
             if play == "Sfx":
-                sfx_play = music_toggle
+                globals.sfx_play = music_toggle
             elif play == "Music":
-                started = False
-                music_play = music_toggle
+                globals.started = False
+                globals.music_play = music_toggle
 
 #Erstellt die Knöpfe per Text
 
 #Make the buttons per text
 def make_buttons(button_text):
-    global buttons, screen_height, screen_width, button_height, button_width, button_colour, text_colour, text_size
+    global buttons, screen_height, screen_width
 
     buttons.clear()
-    center_game_over_x = (screen_width-button_width)/2
-    center_game_over_y = (screen_height-button_height)/2
+    center_game_over_x = (screen_width-globals.button_width)/2
+    center_game_over_y = (screen_height-globals.button_height)/2
     size_inbetween_buttons = 5
     y_down = 0
 
     for text in button_text:
-        button_append = button.button_object(center_game_over_x,center_game_over_y + y_down,button_width,button_height,button_colour,text_colour,text,text_size)
+        button_append = button.button_object(center_game_over_x,center_game_over_y + y_down,globals.button_width,globals.button_height,globals.button_colour,globals.text_colour,text,globals.text_size)
         buttons.append(button_append)
 
-        y_down += button_height + size_inbetween_buttons
+        y_down += globals.button_height + size_inbetween_buttons
 
 def menu_toggle():
     global game_state, text_pause_buttons, text_game_over_buttons, text_main_menu_buttons, text_options_buttons, text_highscore_buttons
@@ -752,7 +715,7 @@ def menu_toggle():
 
 #Shows the scores, first, second and third.
 def show_scores():
-    global text_title_colour, screen_colour, screen_width, button_height, screen_height
+    global screen_width, screen_height
 
     text_size_score = 50
     apart_extra = 10
@@ -761,10 +724,10 @@ def show_scores():
     for i in range(len(scores)):
         score_text = str(i + 1) + ". " + str(scores[i])
 
-        y = screen_height/2 + button_height + apart_extra + text_size_score * i
+        y = screen_height/2 + globals.button_height + apart_extra + text_size_score * i
         x = screen_width / 2
 
-        renderer.render_text(pygame,screen,str(score_text),text_size_score,text_title_colour,screen_colour,y,x)
+        renderer.render_text(pygame,screen,str(score_text),text_size_score,globals.text_title_colour,globals.screen_colour,y,x)
 
 mouse = game_object.object(0,0,[0,0,0],10)
 create_walls()
@@ -784,26 +747,26 @@ while running:
     mouse.y = mouse_pos[1]
 
     if game_state == menu_enum.Menu.GAME.value:
-        show_buttons = False
+        globals.show_buttons = False
         game_logic()
     else:
-        show_buttons = True
+        globals.show_buttons = True
         menu_toggle()
 
         button_logic(mouse,button_up)
 
-    if music_play:
-        if not started:
-            if not_in_main_menu:
+    if globals.music_play:
+        if not globals.started:
+            if globals.not_in_main_menu:
                 resource.menu_theme.stop()
                 resource.main_theme.play()
             else:
                 resource.main_theme.stop()
                 resource.menu_theme.play()
-            started = True
+            globals.started = True
         else:
             if not pygame.mixer.get_busy():
-                started = False
+                globals.started = False
     else:
        resource.stop_music()
 
