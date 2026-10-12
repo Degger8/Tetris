@@ -257,14 +257,6 @@ def move_blocks_down(rows_removed, y_lowest):
                                 y_new = y_new - walls[k].height * 2
                                 walls[k].y = y_new
 
-                            for check in range(len(walls)):
-                                wall_check = walls[check]
-                                if colission_helper.AABB(wall_check,walls[k]) and wall_check is not walls[k]:
-                                    y_new_pos = len(grid) - 2
-
-                                    y_new = y_new - walls[k].height * 2
-                                    walls[k].y = y_new
-
                             grid[y_new_pos][j] = 2
             j = j - 1
 
