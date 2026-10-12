@@ -12,6 +12,7 @@ import Button_Enums as button_enum
 import Menu_Enums as menu_enum
 import File_Helper as file_helper
 import Global_Variables as globals
+import math
 
 #TODO: Add Window resizing.
 
@@ -50,6 +51,8 @@ game_state = menu_enum.Menu.MAINMENU.value
 screen_width = width + globals.extra_width
 screen_height = height + globals.extra_height
 
+diagonal_start = math.sqrt((screen_width*screen_width)+(screen_height*screen_height))
+
 width_walls_total = globals.block_size * globals.columns
 height_walls_total = globals.block_size * globals.rows
 grid = numpy.zeros((globals.rows,globals.columns))
@@ -78,7 +81,7 @@ globals.block_next = random.randint(globals.blocks_min_max[0],globals.blocks_min
 
 pygame.init()
 pygame.display.set_caption("Tetris")
-screen = pygame.display.set_mode((screen_width, screen_height))
+screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
 clock = pygame.time.Clock()
 pygame.display.set_icon(resource.icon)
 
@@ -251,10 +254,10 @@ def move_blocks_down(rows_removed, y_lowest):
 
                             grid[i][j] = 0
 
-                            if y_new_pos >= len(grid):
-                                y_new_pos = len(grid) - 2
+                            while y_new_pos >= len(grid):
+                                y_new_pos = len(grid) - 1
 
-                                y_new = y_new - walls[k].height * 2
+                                y_new = y_new - walls[k].height
                                 walls[k].y = y_new
 
                             grid[y_new_pos][j] = 2
@@ -677,13 +680,13 @@ def make_buttons(button_text):
     global buttons, screen_height, screen_width
 
     buttons.clear()
-    center_game_over_x = (screen_width-globals.button_width)/2
-    center_game_over_y = (screen_height-globals.button_height)/2
+    center_x = (screen_width-globals.button_width)/2
+    center_y = (screen_height-globals.button_height)/2
     size_inbetween_buttons = 5
     y_down = 0
 
     for text in button_text:
-        button_append = button.button_object(center_game_over_x,center_game_over_y + y_down,globals.button_width,globals.button_height,globals.button_colour,globals.text_colour,text,globals.text_size)
+        button_append = button.button_object(center_x,center_y + y_down,globals.button_width,globals.button_height,globals.button_colour,globals.text_colour,text,globals.text_size)
         buttons.append(button_append)
 
         y_down += globals.button_height + size_inbetween_buttons
@@ -720,6 +723,51 @@ def show_scores():
 
         renderer.render_text(pygame,screen,str(score_text),text_size_score,globals.text_title_colour,globals.screen_colour,y,x)
 
+def center_objects(screen_size):
+    global buttons, walls, player_block, screen_width, screen_height, width_center, height_center, width_walls_total, height_walls_total, hold_object, next_object
+
+    old_width = screen_width
+    old_height = screen_height
+
+    width = screen_size[0]
+    height = screen_size[1]
+
+    screen_width = width
+    screen_height = height
+
+    width_center = (screen_width - width_walls_total)/2
+    height_center = (screen_height - height_walls_total)/2
+
+    if player_block is not None:
+        for p in player_block:
+            center_object(p,screen_width,old_width,True)
+            center_object(p,screen_height,old_height,False)
+
+    if walls is not None:
+        for w in walls:
+            center_object(w,screen_width,old_width,True)
+            center_object(w,screen_height,old_height,False)
+
+    if hold_object is not None:
+        for ho in hold_object:
+            center_object(ho,screen_width,old_width,True)
+            center_object(ho,screen_height,old_height,False)
+
+    if next_object is not None:
+        for no in next_object:
+            center_object(no,screen_width,old_width,True)
+            center_object(no,screen_height,old_height,False)
+
+#Damit es sich zentriet, muss es die extra Bildschirmgröße nutzen, welche mit der vergrößerung des Bildschirms kam.
+
+#To make it go to the center, you need to add the extra screensize that came with the window resize
+def center_object(object,new_screen_size,old_screen_size, x_change):
+    offset = (new_screen_size - old_screen_size) / 2
+    if x_change:
+        object.x = object.x + offset
+    else:
+        object.y = object.y + offset
+
 mouse = game_object.object(0,0,[0,0,0],10)
 create_walls()
 
@@ -731,6 +779,8 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONUP:
             button_up = True
+        elif event.type == pygame.VIDEORESIZE:
+            center_objects(screen.get_size())
 
     keyInput = pygame.key.get_pressed()
     mouse_pos = pygame.mouse.get_pos()
