@@ -1,3 +1,10 @@
+#Geteil von Game_Loop.py, um es mehr organisiert aussehen zu lassen und damit nicht so viele Globale Variablen in einer großen Datei sind
+
+#Seperated from Game_Loop.py, to make it look more organized, and to not have so many globals inside of one big file.
+
+
+#Globale Variablen, um den Spielzustand festzuhalten
+
 #Global variables, to keep track of the game state.
 blocks_min_max = [1,7]
 
