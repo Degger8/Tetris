@@ -16,6 +16,7 @@ block_held = 0
 
 #Controls the block sizes. If the widht or height is messed with, it breaks the game.
 block_size = 25
+block_size_og = block_size
 
 rows = 20
 columns = 15
@@ -35,12 +36,19 @@ decrease = 100
 
 button_height = 80
 button_width = 200
+button_height_og = button_height
+button_width_og = button_width
+
 button_colour = [255,255,255]
 text_title_colour = [255,255,255]
 text_colour = [0,0,0]
 screen_colour = [0,0,0]
+
 text_size = 20
 text_size_title = 100
+text_size_og = text_size
+text_size_title_og = text_size_title
+
 speed_level = 1
 
 points = 0

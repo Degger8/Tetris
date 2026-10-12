@@ -144,14 +144,14 @@ def print_grid():
 
 #Defines what colour and how the blocks look when spawned in. Assigns it to the player list too.
 def block_spawn(value, is_player_spawn):
-    global walls, game_state
+    global walls, game_state, height_center, screen_width
 
     blocks = []
 
     block_size = globals.block_size
 
     y = height_center
-    x = (globals.columns/2) * block_size + width_center
+    x = screen_width/2
 
     if value == 1:
         colour = [0,255,255]
@@ -724,7 +724,7 @@ def show_scores():
         renderer.render_text(pygame,screen,str(score_text),text_size_score,globals.text_title_colour,globals.screen_colour,y,x)
 
 def center_objects(screen_size):
-    global buttons, walls, player_block, screen_width, screen_height, width_center, height_center, width_walls_total, height_walls_total, hold_object, next_object
+    global buttons, walls, player_block, screen_width, screen_height, width_center, height_center, width_walls_total, height_walls_total, hold_object, next_object, buttons
 
     old_width = screen_width
     old_height = screen_height
@@ -737,6 +737,14 @@ def center_objects(screen_size):
 
     width_center = (screen_width - width_walls_total)/2
     height_center = (screen_height - height_walls_total)/2
+
+    if buttons is not None:
+        perc = get_percentage()
+
+        globals.button_height = int(globals.button_height_og * perc)
+        globals.button_width = int(globals.button_width_og * perc)
+        globals.text_size = int(globals.text_size_og * perc)
+        globals.text_size_title = int(globals.text_size_title_og * perc)
 
     if player_block is not None:
         for p in player_block:
@@ -758,7 +766,57 @@ def center_objects(screen_size):
             center_object(no,screen_width,old_width,True)
             center_object(no,screen_height,old_height,False)
 
-#Damit es sich zentriet, muss es die extra Bildschirmgröße nutzen, welche mit der vergrößerung des Bildschirms kam.
+width_walls_total_og = width_walls_total
+height_walls_total_og = height_walls_total
+
+#Vergrößert/Verkleinert die Blöcke, je nach Größe.
+
+#Resizes the blocks, so they are the appropiate size.
+def get_percentage():
+    global diagonal_start, screen_height, screen_width
+
+    diagonal_new = math.sqrt((screen_width*screen_width)+(screen_height*screen_height))
+    percentage = diagonal_new/diagonal_start
+
+    max = 1.5
+    min = 0.5
+
+    if percentage > max:
+        percentage = max
+    elif percentage < min:
+        percentage = min
+
+    return percentage
+
+def resize_list(list):
+    global diagonal_start, screen_height, screen_width, width_walls_total, height_walls_total, width_walls_total_og, height_walls_total_og, width_center, height_center
+
+    percentage = get_percentage()
+
+    width_walls_total = width_walls_total_og * percentage
+    height_walls_total = height_walls_total_og * percentage
+
+    width_center = (screen_width - width_walls_total) / 2
+    height_center = (screen_height - height_walls_total) / 2
+
+    for l in list:
+        new_size = globals.block_size_og * percentage
+
+        globals.block_size = new_size
+        l.width = new_size
+        l.height = new_size
+
+        l.x = l.x - new_size
+        l.y = l.y - new_size
+
+    for l1 in list:
+        for l2 in list:
+            if colission_helper.AABB(l1,l2):
+                
+                
+                break
+
+#Damit es sich zentriert, muss es die extra Bildschirmgröße nutzen, welche mit der vergrößerung des Bildschirms kam.
 
 #To make it go to the center, you need to add the extra screensize that came with the window resize
 def center_object(object,new_screen_size,old_screen_size, x_change):
