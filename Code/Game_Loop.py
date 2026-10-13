@@ -618,6 +618,7 @@ def button_todo(text):
         game_state = menu_enum.Menu.GAME.value
         globals.not_in_main_menu = True
         globals.started = False
+        restart()
 
     elif text == button_enum.Button_Text.HIGHSCORE.value:
         game_state = menu_enum.Menu.HIGHSCORE.value
@@ -738,8 +739,10 @@ def center_objects(screen_size):
     width_center = (screen_width - width_walls_total)/2
     height_center = (screen_height - height_walls_total)/2
 
+    perc = get_percentage()
+    globals.block_size = globals.block_size_og * perc
+    
     if buttons is not None:
-        perc = get_percentage()
 
         globals.button_height = int(globals.button_height_og * perc)
         globals.button_width = int(globals.button_width_og * perc)
@@ -747,21 +750,31 @@ def center_objects(screen_size):
         globals.text_size_title = int(globals.text_size_title_og * perc)
 
     if player_block is not None:
+        resize_list(player_block)
         for p in player_block:
             center_object(p,screen_width,old_width,True)
             center_object(p,screen_height,old_height,False)
 
     if walls is not None:
+        width_walls_total = width_walls_total_og * perc
+        height_walls_total = height_walls_total_og * perc
+
+        width_center = (screen_width - width_walls_total) / 2
+        height_center = (screen_height - height_walls_total) / 2
+
+        resize_list(walls)
         for w in walls:
             center_object(w,screen_width,old_width,True)
             center_object(w,screen_height,old_height,False)
 
     if hold_object is not None:
+        resize_list(hold_object)
         for ho in hold_object:
             center_object(ho,screen_width,old_width,True)
             center_object(ho,screen_height,old_height,False)
 
     if next_object is not None:
+        resize_list(next_object)
         for no in next_object:
             center_object(no,screen_width,old_width,True)
             center_object(no,screen_height,old_height,False)
@@ -779,7 +792,7 @@ def get_percentage():
     percentage = diagonal_new/diagonal_start
 
     max = 1.5
-    min = 0.5
+    min = 0.75
 
     if percentage > max:
         percentage = max
@@ -791,30 +804,12 @@ def get_percentage():
 def resize_list(list):
     global diagonal_start, screen_height, screen_width, width_walls_total, height_walls_total, width_walls_total_og, height_walls_total_og, width_center, height_center
 
-    percentage = get_percentage()
-
-    width_walls_total = width_walls_total_og * percentage
-    height_walls_total = height_walls_total_og * percentage
-
-    width_center = (screen_width - width_walls_total) / 2
-    height_center = (screen_height - height_walls_total) / 2
-
     for l in list:
-        new_size = globals.block_size_og * percentage
-
-        globals.block_size = new_size
+        new_size = globals.block_size
         l.width = new_size
         l.height = new_size
 
-        l.x = l.x - new_size
-        l.y = l.y - new_size
-
-    for l1 in list:
-        for l2 in list:
-            if colission_helper.AABB(l1,l2):
-                
-                
-                break
+    
 
 #Damit es sich zentriert, muss es die extra Bildschirmgröße nutzen, welche mit der vergrößerung des Bildschirms kam.
 
@@ -827,7 +822,6 @@ def center_object(object,new_screen_size,old_screen_size, x_change):
         object.y = object.y + offset
 
 mouse = game_object.object(0,0,[0,0,0],10)
-create_walls()
 
 while running:
     button_up = False
