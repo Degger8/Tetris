@@ -13,6 +13,7 @@ import Menu_Enums as menu_enum
 import File_Helper as file_helper
 import Global_Variables as globals
 import math
+from copy import deepcopy
 
 #TODO: Add Window resizing.
 
@@ -724,61 +725,6 @@ def show_scores():
 
         renderer.render_text(pygame,screen,str(score_text),text_size_score,globals.text_title_colour,globals.screen_colour,y,x)
 
-def center_objects(screen_size):
-    global buttons, walls, player_block, screen_width, screen_height, width_center, height_center, width_walls_total, height_walls_total, hold_object, next_object, buttons
-
-    old_width = screen_width
-    old_height = screen_height
-
-    width = screen_size[0]
-    height = screen_size[1]
-
-    screen_width = width
-    screen_height = height
-
-    width_center = (screen_width - width_walls_total)/2
-    height_center = (screen_height - height_walls_total)/2
-
-    perc = get_percentage()
-    globals.block_size = globals.block_size_og * perc
-    
-    if buttons is not None:
-
-        globals.button_height = int(globals.button_height_og * perc)
-        globals.button_width = int(globals.button_width_og * perc)
-        globals.text_size = int(globals.text_size_og * perc)
-        globals.text_size_title = int(globals.text_size_title_og * perc)
-
-    if player_block is not None:
-        resize_list(player_block)
-        for p in player_block:
-            center_object(p,screen_width,old_width,True)
-            center_object(p,screen_height,old_height,False)
-
-    if walls is not None:
-        width_walls_total = width_walls_total_og * perc
-        height_walls_total = height_walls_total_og * perc
-
-        width_center = (screen_width - width_walls_total) / 2
-        height_center = (screen_height - height_walls_total) / 2
-
-        resize_list(walls)
-        for w in walls:
-            center_object(w,screen_width,old_width,True)
-            center_object(w,screen_height,old_height,False)
-
-    if hold_object is not None:
-        resize_list(hold_object)
-        for ho in hold_object:
-            center_object(ho,screen_width,old_width,True)
-            center_object(ho,screen_height,old_height,False)
-
-    if next_object is not None:
-        resize_list(next_object)
-        for no in next_object:
-            center_object(no,screen_width,old_width,True)
-            center_object(no,screen_height,old_height,False)
-
 width_walls_total_og = width_walls_total
 height_walls_total_og = height_walls_total
 
@@ -801,25 +747,61 @@ def get_percentage():
 
     return percentage
 
-def resize_list(list):
-    global diagonal_start, screen_height, screen_width, width_walls_total, height_walls_total, width_walls_total_og, height_walls_total_og, width_center, height_center
-
+def resize_list(list):    
     for l in list:
         new_size = globals.block_size
         l.width = new_size
         l.height = new_size
 
-    
+#Skaliert eine Liste von Objekten (Spielerblock, Wände, platzierte Blöcke, Next, Hold) auf die neue Blockgröße.
+
+#Rescales a list of objects (player block, walls, placed blocks, next, hold) to the new block size.
+#Each object is converted to grid units with the OLD layout and placed again with the NEW layout.
+def fit_resized_block(list, old_block_size, old_width_center, old_height_center):
+    for obj in list:
+        grid_x = round((obj.x - old_width_center) / old_block_size, 6)
+        grid_y = round((obj.y - old_height_center) / old_block_size, 6)
+
+        obj.width = globals.block_size
+        obj.height = globals.block_size
+
+        obj.x = calculate_world_cords(grid_x, True)
+        obj.y = calculate_world_cords(grid_y, False)
 
 #Damit es sich zentriert, muss es die extra Bildschirmgröße nutzen, welche mit der vergrößerung des Bildschirms kam.
 
 #To make it go to the center, you need to add the extra screensize that came with the window resize
-def center_object(object,new_screen_size,old_screen_size, x_change):
-    offset = (new_screen_size - old_screen_size) / 2
-    if x_change:
-        object.x = object.x + offset
-    else:
-        object.y = object.y + offset
+def center_objects(screen_size):
+    global buttons, walls, player_block, screen_width, screen_height, width_center, height_center, width_walls_total, height_walls_total, hold_object, next_object, buttons
+
+    # Remember the old layout so every object can be converted from old -> new
+    old_block_size = globals.block_size
+    old_width_center = width_center
+    old_height_center = height_center
+
+    screen_width = screen_size[0]
+    screen_height = screen_size[1]
+
+    perc = get_percentage()
+
+    globals.block_size = globals.block_size_og * perc
+
+    width_walls_total = width_walls_total_og * perc
+    height_walls_total = height_walls_total_og * perc
+
+    width_center = (screen_width - width_walls_total) / 2
+    height_center = (screen_height - height_walls_total) / 2
+
+    if buttons is not None:
+        globals.button_height = int(globals.button_height_og * perc)
+        globals.button_width = int(globals.button_width_og * perc)
+        globals.text_size = int(globals.text_size_og * perc)
+        globals.text_size_title = int(globals.text_size_title_og * perc)
+
+    # The same function handles the player block, walls (including placed blocks), hold and next.
+    for object_list in (player_block, walls, hold_object, next_object):
+        if object_list is not None:
+            fit_resized_block(object_list, old_block_size, old_width_center, old_height_center)
 
 mouse = game_object.object(0,0,[0,0,0],10)
 
