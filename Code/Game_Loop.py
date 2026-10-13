@@ -254,7 +254,7 @@ def move_blocks_down(rows_removed, y_lowest):
 
                             grid[i][j] = 0
 
-                            while y_new_pos >= len(grid):
+                            while y_new_pos + 1 >= len(grid):
                                 y_new_pos = len(grid) - 1
 
                                 y_new = y_new - walls[k].height
