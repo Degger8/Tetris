@@ -254,9 +254,11 @@ def move_blocks_down(rows_removed, y_lowest):
                             y_new_pos = calculate_grid_cords(y_new,False)
 
                             grid[i][j] = 0
+                            y_current = len(grid)
 
                             while y_new_pos + 1 >= len(grid):
-                                y_new_pos = len(grid) - 1
+                                y_current = y_current - 1
+                                y_new_pos = y_current
 
                                 y_new = y_new - walls[k].height
                                 walls[k].y = y_new
