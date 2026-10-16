@@ -226,14 +226,12 @@ def block_spawn(value, is_player_spawn):
 #Bewegt die Blöcke runter
 
 #Move the blocks down the needed row
-def move_blocks_down(rows_removed, y_lowest):
+def move_blocks_down(indexes_removed,y_lowest):
     global grid, walls
 
     if globals.sfx_play:
         resource.row_cleared.stop()
         resource.row_cleared.play()
-
-    y_move_down = rows_removed * globals.block_size
 
     columns = globals.columns
 
@@ -243,6 +241,15 @@ def move_blocks_down(rows_removed, y_lowest):
         while j >= 0:
             if j > 0 and j + 1 < columns and i + 1 < globals.rows:
                 if grid[i][j] == 2:
+                    rows_removed = 0
+
+                    for l in range(len(indexes_removed)):
+                        number = indexes_removed[l]
+                        if number > i:
+                            rows_removed = rows_removed + 1
+
+                    y_move_down = rows_removed * globals.block_size
+
                     x_world_cords_origin = calculate_world_cords(j,True)
                     y_world_cords_origin = calculate_world_cords(i,False)
                     y_new = y_move_down + y_world_cords_origin
@@ -431,6 +438,8 @@ def game_logic():
 
             y_lowest = lowest_done_row()
             rows_move_down = False
+            rows_removed_list = []
+
             for i in range(globals.rows):
                 row_done = True
                 blocks = []
@@ -448,6 +457,8 @@ def game_logic():
                                     blocks.append(walls[k])
 
                 if row_done:
+                    rows_removed_list.append(i)
+
                     for j in range(len(blocks)):
                         x_array = calculate_grid_cords(blocks[j].x, True)
                         y_array = calculate_grid_cords(blocks[j].y, False)
@@ -460,7 +471,7 @@ def game_logic():
                 blocks.clear()
 
             if rows_move_down:
-                move_blocks_down(rows_removed, y_lowest)
+                move_blocks_down(rows_removed_list,y_lowest)
 
     if globals.block_is_placed or player_block is None or block_held_active:
         globals.block_is_placed = False
